@@ -9,6 +9,9 @@ public class ScenesManager : MonoBehaviour
     //[SerializeField]
     //private List<Scene> scenes;
 
+    [SerializeField]
+    private Logger _logger;
+
     public void Awake()
     {
         Instance = this;
@@ -17,7 +20,7 @@ public class ScenesManager : MonoBehaviour
     public enum Scene
     {
         Lobby,
-        BlankAR
+        GameScene
     }
 
     public void LoadScene(Scene scene)
@@ -27,7 +30,7 @@ public class ScenesManager : MonoBehaviour
 
     public void StartGame()
     {
-        SceneManager.LoadScene(Scene.BlankAR.ToString());
+        SceneManager.LoadScene(Scene.GameScene.ToString());
     }
 
     public void LoadLobby()
