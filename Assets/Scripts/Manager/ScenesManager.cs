@@ -19,6 +19,7 @@ public class ScenesManager : MonoBehaviour
 
     public enum Scene
     {
+        MainMenu,
         Lobby,
         GameScene
     }
@@ -28,13 +29,21 @@ public class ScenesManager : MonoBehaviour
         SceneManager.LoadScene(scene.ToString());
     }
 
-    public void StartGame()
+    public void Exit(Scene scene)
     {
-        SceneManager.LoadScene(Scene.GameScene.ToString());
+        Screen.orientation = ScreenOrientation.Portrait;
+        SceneManager.LoadScene(Scene.MainMenu.ToString());
     }
 
     public void LoadLobby()
     {
+        Screen.orientation = ScreenOrientation.Portrait;
         SceneManager.LoadScene(Scene.Lobby.ToString());
+    }
+
+    public void StartGame()
+    {
+        Screen.orientation = ScreenOrientation.LandscapeLeft;
+        SceneManager.LoadScene(Scene.GameScene.ToString());
     }
 }

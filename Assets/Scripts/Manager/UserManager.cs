@@ -23,10 +23,11 @@ public class UserManager : MonoBehaviour
         }
     }
 
-    public void createCurrentUser(string role)
+    public User createCurrentUser(string role)
     {
         _logger.Log(role, this);
         _currentUser = new User(role);
+        return _currentUser;
     }
 
     public User getCurrentUser()

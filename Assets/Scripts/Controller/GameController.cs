@@ -15,9 +15,14 @@ public class GameController : MonoBehaviour
     {
         //_currentUser = UserManager.Instance.getCurrentUser();
 
-        UserManager man = UserManager.Instance;
+        UserManager userManager = UserManager.Instance;
 
-        User currentUser = man.getCurrentUser();
+        User currentUser = userManager.getCurrentUser();
+
+        if(currentUser == null)
+        {
+            currentUser = userManager.createCurrentUser("Dungeonmaster");
+        }
 
         if (currentUser.getRole() == User.Role.Dungeonmaster)
         {
