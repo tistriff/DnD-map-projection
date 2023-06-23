@@ -41,7 +41,7 @@ public class ScenesManager : MonoBehaviour
         SceneManager.LoadScene(Scene.Lobby.ToString());
     }
 
-    public void StartGame()
+    public void LoadGame()
     {
         Screen.orientation = ScreenOrientation.LandscapeLeft;
         SceneManager.LoadScene(Scene.GameScene.ToString());

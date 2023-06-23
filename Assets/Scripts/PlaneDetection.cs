@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,35 +7,38 @@ using UnityEngine.XR.ARSubsystems;
 
 public class PlaneDetection : MonoBehaviour
 {
-    public GameObject spawn_prefab;
-    private GameObject spawned_object;
-    private bool object_spawned;
+    [SerializeField]
+    GameObject spawn_prefab;
+    
+    private GameObject _spawned_object;
+    private bool _object_spawned;
 
     ARRaycastManager raycastManager;
     List<ARRaycastHit> hits = new List<ARRaycastHit>();
 
-    // Start is called before the first frame update
     void Start()
     {
-        object_spawned = false;
+        _object_spawned = false;
         raycastManager = GetComponent<ARRaycastManager>();
     }
 
-    // Update is called once per frame
     void Update()
     {
+
+        // checks every frame for a touch
+        // if so, a raycast is generated and the first hitted Object is returned
         if (Input.touchCount > 0)
         {
             if (raycastManager.Raycast(Input.GetTouch(0).position, hits, TrackableType.PlaneWithinPolygon))
             {
                 var hitpose = hits[0].pose;
-                if (!spawned_object)
+                if (!_object_spawned)
                 {
-                    spawned_object = Instantiate(spawn_prefab, hitpose.position, hitpose.rotation);
-                    object_spawned = true;
+                    _spawned_object = Instantiate(spawn_prefab, hitpose.position, hitpose.rotation);
+                    _object_spawned = true;
                 } else
                 {
-                    spawned_object.transform.position = hitpose.position;
+                    _spawned_object.transform.position = hitpose.position;
                 }
             }
         }
