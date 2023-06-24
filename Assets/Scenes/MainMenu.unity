@@ -423,7 +423,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 167069404}
-  - component: {fileID: 167069405}
   - component: {fileID: 167069406}
   m_Layer: 0
   m_Name: UIController
@@ -447,20 +446,6 @@ Transform:
   m_Father: {fileID: 1073869565}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &167069405
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 167069403}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3e68000a3b8fa3b4aaf888b4eeebf2b0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  lobbyHeader: {fileID: 0}
-  logger: {fileID: 0}
 --- !u!114 &167069406
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -473,6 +458,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 758bee680dc6444469b057d351024f77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _errorMsg: {fileID: 0}
 --- !u!1 &176953838
 GameObject:
   m_ObjectHideFlags: 0
@@ -1414,8 +1400,8 @@ RectTransform:
   m_Children:
   - {fileID: 1228957218}
   - {fileID: 768902701}
-  - {fileID: 1795973966}
   - {fileID: 1123004556}
+  - {fileID: 1795973966}
   m_Father: {fileID: 176953839}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1474,10 +1460,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf0619db36cd3e44d9e4cb77858c2e5c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerNameField: {fileID: 1228957219}
-  lobbyIdField: {fileID: 768902702}
   errorMsg: {fileID: 1123004557}
-  menuController: {fileID: 167069406}
 --- !u!1 &989818125
 GameObject:
   m_ObjectHideFlags: 0
@@ -2536,7 +2519,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1288422948}
-  - component: {fileID: 1288422947}
   - component: {fileID: 1288422949}
   m_Layer: 0
   m_Name: LobbyManager
@@ -2545,19 +2527,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1288422947
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1288422946}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5ee6955badd6f64eb26b319b8d80204, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _logger: {fileID: 1479604797}
 --- !u!4 &1288422948
 Transform:
   m_ObjectHideFlags: 0
@@ -3159,11 +3128,11 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 935673401}
         m_TargetAssemblyTypeName: UI_InputForm, Assembly-CSharp
-        m_MethodName: submit
-        m_Mode: 1
+        m_MethodName: Submit
+        m_Mode: 2
         m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgument: {fileID: 167069406}
+          m_ObjectArgumentAssemblyTypeName: MainMenuController, Assembly-CSharp
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -3813,7 +3782,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 167069405}
+      objectReference: {fileID: 0}
     - target: {fileID: 8133140751697185283, guid: 7bf08767188514d4d924ca9984b684a4,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName

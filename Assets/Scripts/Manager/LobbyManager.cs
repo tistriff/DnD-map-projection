@@ -8,6 +8,10 @@ using Unity.Services.Lobbies.Models;
 using System;
 using UnityEngine.SceneManagement;
 using TMPro;
+using System.Linq;
+using System.Threading.Tasks;
+using OpenCover.Framework.Model;
+using UnityEngine.Events;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -19,9 +23,9 @@ public class LobbyManager : MonoBehaviour
     private Lobby _currentLobby;
     private float _heartbeatTimer;
     private float _heartbetTimerMax = 15;
-    private float _lobbyUpdateTimer;
-    private float _lobbyUpdateTimerMax = 1.1f;
-    private string _currentPlayerName;
+    private float _lobbyPullTimer;
+    private float _lobbyPullTimerMax = 1.1f;
+    private int _playerLimit = 10;
 
     public enum Role
     {
@@ -82,7 +86,7 @@ public class LobbyManager : MonoBehaviour
     {
         while (_currentLobby != null)
         {
-            HandleLobbyUpdatepolls(_currentLobby);
+            HandleLobbyPulls(_currentLobby);
             yield return null;
         }
 
@@ -90,28 +94,27 @@ public class LobbyManager : MonoBehaviour
 
     }
 
-    private async void HandleLobbyUpdatepolls(Lobby lobby)
+    private async void HandleLobbyPulls(Lobby lobby)
     {
-        _lobbyUpdateTimer -= Time.deltaTime;
-        if (_lobbyUpdateTimer < 0f)
+        _lobbyPullTimer -= Time.deltaTime;
+        if (_lobbyPullTimer < 0f)
         {
-            _lobbyUpdateTimer = _lobbyUpdateTimerMax;
-
+            _lobbyPullTimer = _lobbyPullTimerMax;
             _currentLobby = await LobbyService.Instance.GetLobbyAsync(lobby.Id);
-
+            
         }
     }
 
     // Configures and creates the lobby and the Host Player to let him join automatically
     // Sets up the created lobby as the current lobby so the lobby controller can use the information to display them dynamically
-    public async void CreateLobby(MainMenuController controller)
+    public async void CreateLobby(Action<string> errorFunction)
     {
         try
         {
             QueryResponse queryResponse = await Lobbies.Instance.QueryLobbiesAsync();
 
             string lobbyName = "DnD Lobby " + queryResponse.Results.Count + 1;
-            int maxPlayers = 10;
+            int maxPlayers = _playerLimit;
             string dmName = "DM (Host)";
 
 
@@ -127,11 +130,11 @@ public class LobbyManager : MonoBehaviour
             {
                 HeartbeatLoop();
                 LobbyUpdateLoop();
-                controller.SwitchToLobby();
+                ScenesManager.Instance.LoadLobby();
             }
             else
             {
-                controller.SetError("Keine Lobby gefunden!");
+                errorFunction("Keine Lobby gefunden!");
             }
 
             logger.Log("Created Lobby! " + _currentLobby.Name + " " + _currentLobby.MaxPlayers + " " + _currentLobby.Id + " " + _currentLobby.LobbyCode, this);
@@ -144,6 +147,7 @@ public class LobbyManager : MonoBehaviour
         ScenesManager.Instance.LoadGame();
     }
 
+    // @TODO: Unused
     private async void ListLobbies()
     {
         try
@@ -165,7 +169,7 @@ public class LobbyManager : MonoBehaviour
 
 
     // Function to join a specific Lobby with the Lobbycode as a Client
-    public async void JoinLobbyByCode(string lobbyCode, string playerName, MainMenuController controller)
+    public async void JoinLobbyByCode(string lobbyCode, string playerName, Action<string> errorFunction)
     {
         try
         {
@@ -178,22 +182,22 @@ public class LobbyManager : MonoBehaviour
             {
                 HeartbeatLoop();
                 LobbyUpdateLoop();
-                controller.SwitchToLobby();
+                ScenesManager.Instance.LoadLobby();
             } else
             {
-                controller.SetError("Keine Lobby gefunden!");
+                errorFunction("Keine Lobby gefunden!");
             }
             
         }
         catch (LobbyServiceException e)
         {
-            controller.SetError("Keine Lobby gefunden!");
+            errorFunction("Keine Lobby gefunden!");
             Debug.LogException(e, this);
         }
     }
 
     // Function to quickjoin the first suitable public Lobby without a Lobbycode as a Client
-    public async void QuickJoinLobby(MainMenuController controller)
+    public async void QuickJoinLobby(Action<string> errorFunction)
     {
 
         try
@@ -207,10 +211,10 @@ public class LobbyManager : MonoBehaviour
             {
                 HeartbeatLoop();
                 LobbyUpdateLoop();
-                controller.SwitchToLobby();
+                ScenesManager.Instance.LoadLobby();
             } else
             {
-                controller.SetError("Keine Lobby gefunden!");
+                errorFunction("Keine Lobby gefunden!");
             }
 
         }
@@ -235,10 +239,10 @@ public class LobbyManager : MonoBehaviour
                     {"PlayerName", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, playerName) },
                     {"Role", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, role.ToString()) },
                     {"Color", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "#ffffff") },
-                    {"Weapon", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "sword") }
+                    {"Weapon", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "sword") },
+                    {"ReadyState", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "0") }
                 }
         };
-        _currentPlayerName = playerName;
 
         return player;
     }
@@ -262,12 +266,23 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-     private void PrintPlayers()
+     public List<Player> GetPlayerList()
     {
+        List<Player> players = new List<Player>();
         foreach (Player player in _currentLobby.Players)
         {
             logger.Log(player.Id + " " + player.Data["PlayerName"].Value, this);
+            if(!players.Contains(player)){
+                players.Add(player);
+            }
         }
+
+        return players;
+    }
+
+    public Player GetCurrentPlayer()
+    {
+        return _currentLobby.Players.Find((player) => player.Id == AuthenticationService.Instance.PlayerId);
     }
 
     private async void LeaveLobby()

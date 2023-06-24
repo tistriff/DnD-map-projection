@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-public class MainMenuController : MonoBehaviour
+public class LobbyConfigController : MonoBehaviour
 {
     [SerializeField] private TMP_Text _errorMsg;
 
