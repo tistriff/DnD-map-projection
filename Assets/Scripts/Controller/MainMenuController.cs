@@ -32,7 +32,7 @@ public class MainMenuController : MonoBehaviour
 
     public void SubmitJoin()
     {
-        TMP_InputField[] fields = GameObject.FindObjectsOfType<TMP_InputField>();
+        TMP_InputField[] fields = FindObjectsOfType<TMP_InputField>();
         if (fields.Length < 2)
             return;
         string playerName = fields[0].text;

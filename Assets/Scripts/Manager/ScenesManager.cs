@@ -15,6 +15,14 @@ public class ScenesManager : MonoBehaviour
     public void Awake()
     {
         Instance = this;
+        
+    }
+
+    private void Start()
+    {
+        string scene = SceneManager.GetActiveScene().name;
+        if(scene.Equals("Lobby") || scene.Equals("MainMenu"))
+            Screen.orientation = ScreenOrientation.Portrait;
     }
 
     public enum Scene
@@ -29,7 +37,7 @@ public class ScenesManager : MonoBehaviour
         SceneManager.LoadScene(scene.ToString());
     }
 
-    public void Exit(Scene scene)
+    public void Exit()
     {
         Screen.orientation = ScreenOrientation.Portrait;
         SceneManager.LoadScene(Scene.MainMenu.ToString());

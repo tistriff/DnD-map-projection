@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 2
   tags:
   - Logger
+  - PlayerList
+  - LobbyID
   layers:
   - Default
   - TransparentFX

@@ -6,12 +6,6 @@ using Unity.Services.Lobbies;
 using UnityEngine;
 using Unity.Services.Lobbies.Models;
 using System;
-using UnityEngine.SceneManagement;
-using TMPro;
-using System.Linq;
-using System.Threading.Tasks;
-using OpenCover.Framework.Model;
-using UnityEngine.Events;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -144,7 +138,7 @@ public class LobbyManager : MonoBehaviour
             Debug.LogException(e, this);
         }
 
-        ScenesManager.Instance.LoadGame();
+        ScenesManager.Instance.LoadLobby();
     }
 
     // @TODO: Unused
@@ -238,8 +232,8 @@ public class LobbyManager : MonoBehaviour
                 {
                     {"PlayerName", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, playerName) },
                     {"Role", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, role.ToString()) },
-                    {"Color", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "#ffffff") },
                     {"Weapon", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "sword") },
+                    {"Color", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "#000000") },
                     {"ReadyState", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "0") }
                 }
         };
@@ -285,11 +279,21 @@ public class LobbyManager : MonoBehaviour
         return _currentLobby.Players.Find((player) => player.Id == AuthenticationService.Instance.PlayerId);
     }
 
-    private async void LeaveLobby()
+    public string GetCurrentLobbyKey()
+    {
+        if(_currentLobby != null)
+            return _currentLobby.LobbyCode;
+
+        return null;
+    }
+
+    public async void LeaveLobby()
     {
         try
         {
+            logger.Log("Leave Lobby", this);
             await LobbyService.Instance.RemovePlayerAsync(_currentLobby.Id, AuthenticationService.Instance.PlayerId);
+            ScenesManager.Instance.Exit();
         }
         catch (LobbyServiceException e)
         {
@@ -297,7 +301,7 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    private async void KickPlayer(Player player)
+    public async void KickPlayer(Player player)
     {
         try
         {

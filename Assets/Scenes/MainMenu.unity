@@ -458,7 +458,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 758bee680dc6444469b057d351024f77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _errorMsg: {fileID: 0}
+  _errorMsg: {fileID: 1123004557}
 --- !u!1 &176953838
 GameObject:
   m_ObjectHideFlags: 0
@@ -1378,7 +1378,6 @@ GameObject:
   - component: {fileID: 935673398}
   - component: {fileID: 935673400}
   - component: {fileID: 935673399}
-  - component: {fileID: 935673401}
   m_Layer: 5
   m_Name: FormWindow
   m_TagString: Untagged
@@ -1448,19 +1447,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 935673397}
   m_CullTransparentMesh: 1
---- !u!114 &935673401
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 935673397}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bf0619db36cd3e44d9e4cb77858c2e5c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  errorMsg: {fileID: 1123004557}
 --- !u!1 &989818125
 GameObject:
   m_ObjectHideFlags: 0
@@ -3126,7 +3112,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 935673401}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: UI_InputForm, Assembly-CSharp
         m_MethodName: Submit
         m_Mode: 2
@@ -3782,16 +3768,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 167069406}
     - target: {fileID: 8133140751697185283, guid: 7bf08767188514d4d924ca9984b684a4,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: StartGame
+      value: CreateGameSession
       objectReference: {fileID: 0}
     - target: {fileID: 8133140751697185283, guid: 7bf08767188514d4d924ca9984b684a4,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: LobbyController, Assembly-CSharp
+      value: MainMenuController, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 8133140751697185283, guid: 7bf08767188514d4d924ca9984b684a4,
         type: 3}
