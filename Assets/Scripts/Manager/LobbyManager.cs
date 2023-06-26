@@ -92,6 +92,7 @@ public class LobbyManager : MonoBehaviour
     {
         while (_currentLobby != null)
         {
+            Debug.Log("Lobby Update");
             HandleLobbyPulls(_currentLobby);
             yield return null;
         }
@@ -108,7 +109,22 @@ public class LobbyManager : MonoBehaviour
             _lobbyPullTimer = _lobbyPullTimerMax;
             _currentLobby = await LobbyService.Instance.GetLobbyAsync(lobby.Id);
             
+            if(!IsPlayerInLobby())
+            {
+                logger.Log("Du wurdest von der Lobby entfernt", this);
+                ScenesManager.Instance.Exit();
+            }
+
+            // CheckReady()
+            // { check nach GAME_START Value in LobbyOptions }
+            // GAME_START VAL wird auf 1 gesetzt, wenn das erste mal alle Teilnehmer ready sind
+            // Es wird nur dann gecheckt ob alle Ready sind, wenn der Readybutton getoggelt wird
         }
+    }
+
+    private bool IsPlayerInLobby()
+    {
+        return (GetCurrentPlayer() != null);
     }
 
     // Configures and creates the lobby and the Host Player to let him join automatically
