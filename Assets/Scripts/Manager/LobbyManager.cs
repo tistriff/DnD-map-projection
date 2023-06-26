@@ -51,6 +51,18 @@ public class LobbyManager : MonoBehaviour
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
     }
 
+    private void Update()
+    {
+        /*if(_currentLobby != null)
+        {
+            Debug.Log("Lobby aktiv");
+        }
+        else
+        {
+            Debug.Log("Lobby nicht aktiv!");
+        }*/
+    }
+
     // Lobby heartbeat loop & handling
     IEnumerator HeartbeatLoop()
     {
@@ -128,7 +140,7 @@ public class LobbyManager : MonoBehaviour
             }
             else
             {
-                errorFunction("Keine Lobby gefunden!");
+                errorFunction("Lobby konnte nicht erstellt werden!");
             }
 
             logger.Log("Created Lobby! " + _currentLobby.Name + " " + _currentLobby.MaxPlayers + " " + _currentLobby.Id + " " + _currentLobby.LobbyCode, this);
@@ -220,9 +232,10 @@ public class LobbyManager : MonoBehaviour
 
 
     // Creates a usable Player Object
-    private Player CreatePlayer(string playerName = null, Role role = Role.Player)
+    private Player CreatePlayer(string playerName = "", Role role = Role.Player)
     {
-        if(playerName == null)
+
+        if(playerName.Equals(""))
         {
             playerName = "Player " + UnityEngine.Random.Range(0, 99);
         }
@@ -265,7 +278,7 @@ public class LobbyManager : MonoBehaviour
         List<Player> players = new List<Player>();
         foreach (Player player in _currentLobby.Players)
         {
-            logger.Log(player.Id + " " + player.Data["PlayerName"].Value, this);
+            //logger.Log(player.Data["PlayerName"].Value, this);
             if(!players.Contains(player)){
                 players.Add(player);
             }

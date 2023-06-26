@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -30,20 +27,17 @@ public class MainMenuController : MonoBehaviour
     }
 
 
-    public void SubmitJoin()
+    public void SubmitJoin(GameObject form)
     {
-        TMP_InputField[] fields = FindObjectsOfType<TMP_InputField>();
-        if (fields.Length < 2)
-            return;
-        string playerName = fields[0].text;
-        string lobbyId = fields[1].text;
+        string playerName = form.transform.Find("Input_Spielername").transform.GetComponent<TMP_InputField>().text;
+        string lobbyId = form.transform.Find("Input_LobbyID").transform.GetComponent<TMP_InputField>().text;
         if (!string.IsNullOrEmpty(lobbyId))
         {
             JoinGameSession(playerName, lobbyId);
         }
         else
         {
-            SetError("Lobby-ID benötigt!");
+            SetError("Lobby-ID benÃ¶tigt!");
         }
     }
 

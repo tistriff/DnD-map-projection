@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-public class LobbyController : MonoBehaviour
+public class LobbyMainFunctionController : MonoBehaviour
 {
 
     public void Ready()
