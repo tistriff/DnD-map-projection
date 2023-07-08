@@ -2,10 +2,6 @@ using UnityEngine;
 
 public class UI_Window: MonoBehaviour
 {
-    private void Start()
-    {
-        Hide();
-    }
 
     public void Show()
     {

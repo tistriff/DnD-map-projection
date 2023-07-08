@@ -15,7 +15,9 @@ public class ScenesManager : MonoBehaviour
     public void Awake()
     {
         Instance = this;
-        
+        if (!SceneManager.GetActiveScene().name.Equals(Scene.MainMenu.ToString()) && LobbyManager.Instance.GetCurrentLobby() == null)
+            Exit();
+            
     }
 
     private void Start()

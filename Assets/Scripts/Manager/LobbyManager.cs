@@ -78,13 +78,21 @@ public class LobbyManager : MonoBehaviour
 
     private async void HandleLobbyHeartbeat(Lobby lobby)
     {
-        _heartbeatTimer -= Time.deltaTime;
-        if (_heartbeatTimer < 0f)
+        try
         {
-            _heartbeatTimer = _heartbetTimerMax;
+            _heartbeatTimer -= Time.deltaTime;
+            if (_heartbeatTimer < 0f)
+            {
+                _heartbeatTimer = _heartbetTimerMax;
 
-            await LobbyService.Instance.SendHeartbeatPingAsync(lobby.Id);
+                await LobbyService.Instance.SendHeartbeatPingAsync(lobby.Id);
+            }
         }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogException(e, this);
+        }
+
     }
 
     // Update poll lopp & handling
@@ -92,7 +100,6 @@ public class LobbyManager : MonoBehaviour
     {
         while (_currentLobby != null)
         {
-            Debug.Log("Lobby Update");
             HandleLobbyPulls(_currentLobby);
             yield return null;
         }
@@ -103,23 +110,32 @@ public class LobbyManager : MonoBehaviour
 
     private async void HandleLobbyPulls(Lobby lobby)
     {
-        _lobbyPullTimer -= Time.deltaTime;
-        if (_lobbyPullTimer < 0f)
+        try
         {
-            _lobbyPullTimer = _lobbyPullTimerMax;
-            _currentLobby = await LobbyService.Instance.GetLobbyAsync(lobby.Id);
-            
-            if(!IsPlayerInLobby())
+            _lobbyPullTimer -= Time.deltaTime;
+            if (_lobbyPullTimer < 0f)
             {
-                logger.Log("Du wurdest von der Lobby entfernt", this);
-                ScenesManager.Instance.Exit();
-            }
+                _lobbyPullTimer = _lobbyPullTimerMax;
+                _currentLobby = await LobbyService.Instance.GetLobbyAsync(lobby.Id);
 
-            // CheckReady()
-            // { check nach GAME_START Value in LobbyOptions }
-            // GAME_START VAL wird auf 1 gesetzt, wenn das erste mal alle Teilnehmer ready sind
-            // Es wird nur dann gecheckt ob alle Ready sind, wenn der Readybutton getoggelt wird
+                if (GetCurrentPlayer() == null) // IsPlayerInLobby() ?
+                {
+                    _currentLobby = null;
+                    ScenesManager.Instance.Exit();
+                    logger.Log("Du wurdest von der Lobby entfernt", this);
+                }
+
+                // CheckReady()
+                // { check nach GAME_START Value in LobbyOptions }
+                // GAME_START VAL wird auf 1 gesetzt, wenn das erste mal alle Teilnehmer ready sind
+                // Es wird nur dann gecheckt ob alle Ready sind, wenn der Readybutton getoggelt wird
+            }
         }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogException(e, this);
+        }
+
     }
 
     private bool IsPlayerInLobby()
@@ -150,8 +166,8 @@ public class LobbyManager : MonoBehaviour
 
             if (_currentLobby != null)
             {
-                HeartbeatLoop();
-                LobbyUpdateLoop();
+                StartCoroutine(HeartbeatLoop());
+                StartCoroutine(LobbyUpdateLoop());
                 ScenesManager.Instance.LoadLobby();
             }
             else
@@ -200,16 +216,16 @@ public class LobbyManager : MonoBehaviour
                 Player = CreatePlayer(playerName)
             };
             _currentLobby = await Lobbies.Instance.JoinLobbyByCodeAsync(lobbyCode, joinLobbyByCodeOptions);
-            if(_currentLobby != null)
+            if (_currentLobby != null)
             {
-                HeartbeatLoop();
-                LobbyUpdateLoop();
+                StartCoroutine(LobbyUpdateLoop());
                 ScenesManager.Instance.LoadLobby();
-            } else
+            }
+            else
             {
                 errorFunction("Keine Lobby gefunden!");
             }
-            
+
         }
         catch (LobbyServiceException e)
         {
@@ -231,10 +247,10 @@ public class LobbyManager : MonoBehaviour
             _currentLobby = await LobbyService.Instance.QuickJoinLobbyAsync(quickJoinLobbyOptions);
             if (_currentLobby != null)
             {
-                HeartbeatLoop();
-                LobbyUpdateLoop();
+                StartCoroutine(LobbyUpdateLoop());
                 ScenesManager.Instance.LoadLobby();
-            } else
+            }
+            else
             {
                 errorFunction("Keine Lobby gefunden!");
             }
@@ -251,7 +267,7 @@ public class LobbyManager : MonoBehaviour
     private Player CreatePlayer(string playerName = "", Role role = Role.Player)
     {
 
-        if(playerName.Equals(""))
+        if (playerName.Equals(""))
         {
             playerName = "Player " + UnityEngine.Random.Range(0, 99);
         }
@@ -289,13 +305,40 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-     public List<Player> GetPlayerList()
+    private async void UpdateLobbyConfig(string bytes, string raster)
+    {
+        try
+        {
+            _currentLobby = await Lobbies.Instance.UpdateLobbyAsync(_currentLobby.Id, new UpdateLobbyOptions
+            {
+                Data = new Dictionary<string, DataObject>
+                {
+                    {"img", new DataObject(DataObject.VisibilityOptions.Member, bytes)},
+                    {"raster", new DataObject(DataObject.VisibilityOptions.Member, raster)},
+                }
+            });
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogException(e, this);
+        }
+    }
+
+    public Lobby GetCurrentLobby()
+    {
+        return _currentLobby;
+    }
+
+    public List<Player> GetPlayerList()
     {
         List<Player> players = new List<Player>();
+        if (_currentLobby == null)
+            return null;
         foreach (Player player in _currentLobby.Players)
         {
             //logger.Log(player.Data["PlayerName"].Value, this);
-            if(!players.Contains(player)){
+            if (!players.Contains(player))
+            {
                 players.Add(player);
             }
         }
@@ -310,7 +353,7 @@ public class LobbyManager : MonoBehaviour
 
     public string GetCurrentLobbyKey()
     {
-        if(_currentLobby != null)
+        if (_currentLobby != null)
             return _currentLobby.LobbyCode;
 
         return null;
@@ -321,8 +364,11 @@ public class LobbyManager : MonoBehaviour
         try
         {
             logger.Log("Leave Lobby", this);
-            await LobbyService.Instance.RemovePlayerAsync(_currentLobby.Id, AuthenticationService.Instance.PlayerId);
-            ScenesManager.Instance.Exit();
+            string playerId = AuthenticationService.Instance.PlayerId;
+            if (_currentLobby.HostId.Equals(playerId))
+                CloseLobby();
+            else
+                await LobbyService.Instance.RemovePlayerAsync(_currentLobby.Id, AuthenticationService.Instance.PlayerId);
         }
         catch (LobbyServiceException e)
         {
@@ -347,6 +393,7 @@ public class LobbyManager : MonoBehaviour
         try
         {
             await LobbyService.Instance.DeleteLobbyAsync(_currentLobby.Id);
+            _currentLobby = null;
         }
         catch (LobbyServiceException e)
         {

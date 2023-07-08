@@ -14,7 +14,7 @@ public class SessionController : MonoBehaviour
         }
         else
         {
-            NetworkManager.Singleton.StartClient();
+            //NetworkManager.Singleton.StartClient();
         }
     }
 

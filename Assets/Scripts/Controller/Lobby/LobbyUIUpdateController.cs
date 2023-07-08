@@ -7,7 +7,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class LobbyUI_UpdateController : MonoBehaviour
+public class LobbyUIUpdateController : MonoBehaviour
 {
 
     private float _lobbyUpdateTimer;
@@ -39,7 +39,13 @@ public class LobbyUI_UpdateController : MonoBehaviour
         TMP_Text lobbyTitle = GameObject.FindGameObjectWithTag("LobbyID").GetComponent<TMP_Text>();
         if (lobbyTitle != null)
             lobbyTitle.text = "Lobby-Code: " + LobbyManager.Instance.GetCurrentLobbyKey();
+
     }
+
+    //public delegate void OnVariableChangeDelegate(int newVal);
+    //public event OnVariableChangeDelegate OnVariableChange;
+    // https://forum.unity.com/threads/variable-listener.468721/
+
 
     private void Update()
     {
@@ -54,6 +60,12 @@ public class LobbyUI_UpdateController : MonoBehaviour
         {
             _lobbyUpdateTimer = _lobbyUpdateTimerMax;
             List<Player> players = LobbyManager.Instance.GetPlayerList();
+
+            if(players == null)
+            {
+                ScenesManager.Instance.Exit();
+                return;
+            }
             if (!CompareList(players))
                 createPlayerList(players);
         }
@@ -68,8 +80,13 @@ public class LobbyUI_UpdateController : MonoBehaviour
         _currentPlayerList = new List<Player>();
 
         GameObject rootElement = GameObject.FindGameObjectWithTag("PlayerList");
+        foreach (Transform child in rootElement.transform)
+        {
+            Destroy(child.gameObject);
+        }
 
         GameObject element;
+
         foreach (Player player in players)
         {
             element = Instantiate(_playerElementTemplate, rootElement.transform);
@@ -114,7 +131,7 @@ public class LobbyUI_UpdateController : MonoBehaviour
             return false;
         for (int i = 0; i < players.Count; i++)
         {
-            if (players[i] != _currentPlayerList[i])
+            if (_currentPlayerList.Find((player) => player.Equals(players)) == null)
                 return false;
         }
 
