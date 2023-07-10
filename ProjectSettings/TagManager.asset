@@ -9,6 +9,8 @@ TagManager:
   - PlayerNameInput
   - LobbyID
   - LobbyIDInput
+  - ColorButton
+  - WeaponButton
   layers:
   - Default
   - TransparentFX

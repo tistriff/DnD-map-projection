@@ -3,7 +3,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,9 +15,17 @@ public class LobbyConfigController : MonoBehaviour
     private Image _img;
     //private Material mat;
 
-    [SerializeField] private TMP_Text _selectedImageText;
-    [SerializeField] private Button _rasterWindowButton;
+    private TMP_Text _selectedImageText;
+    Button _rasterWindowButton;
     [SerializeField] private Image _rasterImage;
+    [SerializeField] private GameObject _rasterMenu;
+
+    [SerializeField] private int _gridSize;
+    [SerializeField] private TMP_Text _gridSizeText;
+    [SerializeField] private GameObject _gridLayer;
+    [SerializeField] private Button _plus;
+    [SerializeField] private Button _minus;
+    [SerializeField] private GameObject _readyWarn;
     //private NetworkVariable<Image> bytes = new NetworkVariable<Image>();
 
     void Start()
@@ -65,8 +75,10 @@ public class LobbyConfigController : MonoBehaviour
     }
 
 
-    public void OpenFileBrowser()
+    public void OpenFileBrowser(TMP_Text text, Button btn)
     {
+        _selectedImageText = text;
+        _rasterWindowButton = btn;
         StartCoroutine(ShowLoadDialogCoroutine());
     }
 
@@ -78,23 +90,17 @@ public class LobbyConfigController : MonoBehaviour
         // Title: "Load File", Submit button text: "Load"
         yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.FilesAndFolders, false, null, null, "Lade Ordner und Dateien", "Wählen");
 
-        // Dialog is closed
-        // Print whether the user has selected some files/folders or cancelled the operation (FileBrowser.Success)
-        Debug.Log(FileBrowser.Success);
-
         if (FileBrowser.Success && !string.IsNullOrEmpty(FileBrowser.Result[0]))
         {
             // Print paths of the selected files (FileBrowser.Result) (null, if FileBrowser.Success is false)
             //Debug.Log(FileBrowser.Result[0]);
-            _selectedImageText.text = FileBrowser.Result[0];
-            
+            _selectedImageText.text = FileBrowserHelpers.GetFilename(FileBrowser.Result[0]);
+
 
             byte[] bytes = FileBrowserHelpers.ReadBytesFromFile(FileBrowser.Result[0]);
             _tex = new Texture2D(2, 2);
-            if(ImageConversion.LoadImage(_tex, bytes))
-            {
-                _rasterImage.sprite = Sprite.Create(_tex, new Rect(0, 0, _tex.width, _tex.height), new Vector2());
-            }
+            _tex.LoadImage(bytes);
+            _rasterImage.sprite = Sprite.Create(_tex, new Rect(0, 0, _tex.width, _tex.height), new Vector2(0.5f, 0.5f));
 
             _rasterWindowButton.interactable = true;
             // Read the bytes of the first file via FileBrowserHelpers
@@ -127,6 +133,77 @@ public class LobbyConfigController : MonoBehaviour
             ResetUI();
         }
     }
+
+    public void OpenRasterMenu()
+    {
+        _rasterMenu.SetActive(true);
+        PlaceRaster();
+    }
+
+    public void ReduceRaster()
+    {
+        if (_gridSize < 1)
+            return;
+        _plus.interactable = false;
+        _minus.interactable = false;
+        
+        _gridSize--;
+        PlaceRaster();
+
+        _plus.interactable = true;
+        _minus.interactable = true;
+    }
+
+    public void IncreaseRaster()
+    {
+        _plus.interactable = false;
+        _minus.interactable = false;
+
+        _gridSize++;
+        PlaceRaster();
+
+        _plus.interactable = true;
+        _minus.interactable = true;
+    }
+
+    private void PlaceRaster()
+    {
+        Transform grid = _rasterImage.gameObject.transform.GetChild(0);
+        Transform verticalLayer = grid.GetChild(0);
+        ClearRaster(verticalLayer);
+
+        for (int y = 0; y < _gridSize; y++)
+        {
+            GameObject layer = Instantiate(_gridLayer, verticalLayer);
+            Transform child = layer.transform.GetChild(0);
+
+            for (int x = 1; x < _gridSize; x++)
+            {
+                Instantiate(child, layer.transform);
+            }
+        }
+
+        _gridSizeText.text = _gridSize.ToString();
+    }
+
+    public void UpdateLobbyConfig()
+    {
+        byte[] bytes = ImageConversion.EncodeToJPG(_tex);
+        string imgString = Convert.ToBase64String(bytes);
+        LobbyManager.Instance.UpdateLobbyConfig(imgString, _gridSize.ToString());
+        _readyWarn.SetActive(false);
+    }
+
+    private void ClearRaster(Transform verticalLayer)
+    {
+        foreach(Transform child in verticalLayer)
+        {
+            foreach(Transform subchild in child)
+                Destroy(subchild.gameObject);
+            Destroy(child.gameObject);
+        }
+    }
+
 
     private void ResetUI()
     {

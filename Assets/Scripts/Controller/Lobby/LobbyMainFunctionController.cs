@@ -7,9 +7,20 @@ using UnityEngine;
 public class LobbyMainFunctionController : MonoBehaviour
 {
 
-    public void Ready()
+    public void Ready(ReadyToggle toggle)
     {
+        toggle.Toggle();
+        LobbyManager.Instance.UpdatePlayerReady(toggle.GetReadyState());
+    }
 
+    public void UpdatePlayer(string weaponSelection)
+    {
+        LobbyManager.Instance.UpdatePlayerWeapon(weaponSelection);
+    }
+
+    public void UpdatePlayer(Color colorSelection)
+    {
+        LobbyManager.Instance.UpdatePlayerColor(colorSelection);
     }
 
     public void LeaveLobby()

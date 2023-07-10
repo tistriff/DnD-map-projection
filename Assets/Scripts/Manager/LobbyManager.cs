@@ -6,6 +6,7 @@ using Unity.Services.Lobbies;
 using UnityEngine;
 using Unity.Services.Lobbies.Models;
 using System;
+using System.Linq;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -20,6 +21,7 @@ public class LobbyManager : MonoBehaviour
     private float _lobbyPullTimer;
     private float _lobbyPullTimerMax = 1.1f;
     private int _playerLimit = 10;
+    private bool _gameStarted = false;
 
     public enum Role
     {
@@ -49,18 +51,6 @@ public class LobbyManager : MonoBehaviour
             logger.Log("Signed in " + AuthenticationService.Instance.PlayerId, this);
         };
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
-    }
-
-    private void Update()
-    {
-        /*if(_currentLobby != null)
-        {
-            Debug.Log("Lobby aktiv");
-        }
-        else
-        {
-            Debug.Log("Lobby nicht aktiv!");
-        }*/
     }
 
     // Lobby heartbeat loop & handling
@@ -121,11 +111,17 @@ public class LobbyManager : MonoBehaviour
                 if (GetCurrentPlayer() == null) // IsPlayerInLobby() ?
                 {
                     _currentLobby = null;
-                    ScenesManager.Instance.Exit();
                     logger.Log("Du wurdest von der Lobby entfernt", this);
                 }
 
-                // CheckReady()
+                _gameStarted = _currentLobby.Data["GameStarted"].Value == "True";
+
+                //Debug.Log(_currentLobby.Data["Raster"].Value);
+
+                if(IsDM() && !_gameStarted && CheckReady())
+                {
+                    UpdateLobbyGameState(true);
+                }
                 // { check nach GAME_START Value in LobbyOptions }
                 // GAME_START VAL wird auf 1 gesetzt, wenn das erste mal alle Teilnehmer ready sind
                 // Es wird nur dann gecheckt ob alle Ready sind, wenn der Readybutton getoggelt wird
@@ -159,7 +155,14 @@ public class LobbyManager : MonoBehaviour
             CreateLobbyOptions createLobbyOptions = new CreateLobbyOptions
             {
                 IsPrivate = false,
-                Player = CreatePlayer(dmName, Role.Dungeonmaster)
+                Player = CreatePlayer(dmName, Color.black),
+                Data = new Dictionary<string, DataObject>
+                {
+                    {"Image", new DataObject(DataObject.VisibilityOptions.Member, "0") },
+                    {"Raster", new DataObject(DataObject.VisibilityOptions.Member, "0") },
+                    {"GameStarted", new DataObject(DataObject.VisibilityOptions.Member, "False") },
+                    {"RelayCode", new DataObject(DataObject.VisibilityOptions.Member, "0") },
+                }
             };
 
             _currentLobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, createLobbyOptions);
@@ -184,27 +187,6 @@ public class LobbyManager : MonoBehaviour
 
         ScenesManager.Instance.LoadLobby();
     }
-
-    // @TODO: Unused
-    private async void ListLobbies()
-    {
-        try
-        {
-            QueryResponse queryResponse = await Lobbies.Instance.QueryLobbiesAsync();
-
-            logger.Log("Lobbies found: " + queryResponse.Results.Count, this);
-            foreach (Lobby lobby in queryResponse.Results)
-            {
-                logger.Log(lobby.Name + " " + lobby.MaxPlayers, this);
-            }
-
-        }
-        catch (LobbyServiceException e)
-        {
-            Debug.LogException(e, this);
-        }
-    }
-
 
     // Function to join a specific Lobby with the Lobbycode as a Client
     public async void JoinLobbyByCode(string lobbyCode, string playerName, Action<string> errorFunction)
@@ -242,7 +224,7 @@ public class LobbyManager : MonoBehaviour
         {
             QuickJoinLobbyOptions quickJoinLobbyOptions = new QuickJoinLobbyOptions
             {
-                Player = CreatePlayer("Player " + UnityEngine.Random.Range(0, 9))
+                Player = CreatePlayer()
             };
             _currentLobby = await LobbyService.Instance.QuickJoinLobbyAsync(quickJoinLobbyOptions);
             if (_currentLobby != null)
@@ -262,31 +244,88 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-
     // Creates a usable Player Object
-    private Player CreatePlayer(string playerName = "", Role role = Role.Player)
+    private Player CreatePlayer(string playerName = "", /*Role role = Role.Player,*/ Color? color = null)
     {
+        string colorString = ColorUtility.ToHtmlStringRGB(color ?? Color.white);
 
         if (playerName.Equals(""))
         {
             playerName = "Player " + UnityEngine.Random.Range(0, 99);
         }
+
         Player player = new Player
         {
             Data = new Dictionary<string, PlayerDataObject>
                 {
                     {"PlayerName", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, playerName) },
-                    {"Role", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, role.ToString()) },
+//                    {"Role", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, role.ToString()) },
                     {"Weapon", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "sword") },
-                    {"Color", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "#000000") },
-                    {"ReadyState", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "0") }
+                    {"Color", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "#" + colorString) },
+                    {"ReadyState", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "False") }
                 }
         };
 
         return player;
     }
 
-    private async void UpdatePlayerConfig(Color newColor, string newWeapon)
+    public async void UpdateLobbyConfig(string bytes, string raster)
+    {
+        try
+        {
+            _currentLobby = await Lobbies.Instance.UpdateLobbyAsync(_currentLobby.Id, new UpdateLobbyOptions
+            {
+                Data = new Dictionary<string, DataObject>
+                {
+                    {"Image", new DataObject(DataObject.VisibilityOptions.Member, bytes.Count().ToString())},
+                    {"Raster", new DataObject(DataObject.VisibilityOptions.Member, raster)},
+                }
+            });
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogException(e, this);
+        }
+    }
+
+    public async void UpdateLobbyGameState(bool state)
+    {
+        try
+        {
+            _currentLobby = await Lobbies.Instance.UpdateLobbyAsync(_currentLobby.Id, new UpdateLobbyOptions
+            {
+                Data = new Dictionary<string, DataObject>
+                {
+                    {"GameStarted", new DataObject(DataObject.VisibilityOptions.Member, state.ToString())},
+                }
+            });
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogException(e, this);
+        }
+    }
+
+    public async void UpdatePlayerColor(Color newColor)
+    {
+        string colorString = ColorUtility.ToHtmlStringRGB(newColor);
+        try
+        {
+            await LobbyService.Instance.UpdatePlayerAsync(_currentLobby.Id, AuthenticationService.Instance.PlayerId, new UpdatePlayerOptions
+            {
+                Data = new Dictionary<string, PlayerDataObject>
+                {
+                    {"Color", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "#" + colorString) },
+                }
+            });
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogException(e, this);
+        }
+    }
+
+    public async void UpdatePlayerWeapon(string newWeapon)
     {
         try
         {
@@ -294,7 +333,6 @@ public class LobbyManager : MonoBehaviour
             {
                 Data = new Dictionary<string, PlayerDataObject>
                 {
-                    {"Color", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, newColor.ToString()) },
                     {"Weapon", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, newWeapon) }
                 }
             });
@@ -305,16 +343,15 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    private async void UpdateLobbyConfig(string bytes, string raster)
+    public async void UpdatePlayerReady(bool ready)
     {
         try
         {
-            _currentLobby = await Lobbies.Instance.UpdateLobbyAsync(_currentLobby.Id, new UpdateLobbyOptions
+            await LobbyService.Instance.UpdatePlayerAsync(_currentLobby.Id, AuthenticationService.Instance.PlayerId, new UpdatePlayerOptions
             {
-                Data = new Dictionary<string, DataObject>
+                Data = new Dictionary<string, PlayerDataObject>
                 {
-                    {"img", new DataObject(DataObject.VisibilityOptions.Member, bytes)},
-                    {"raster", new DataObject(DataObject.VisibilityOptions.Member, raster)},
+                    {"ReadyState", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, ready.ToString()) }
                 }
             });
         }
@@ -324,6 +361,16 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    private bool CheckReady()
+    {
+        foreach(Player player in _currentLobby.Players)
+        {
+            if (player.Data["ReadyState"].Value == "False")
+                return false;
+        }
+        return true;
+    }
+
     public Lobby GetCurrentLobby()
     {
         return _currentLobby;
@@ -331,19 +378,10 @@ public class LobbyManager : MonoBehaviour
 
     public List<Player> GetPlayerList()
     {
-        List<Player> players = new List<Player>();
         if (_currentLobby == null)
             return null;
-        foreach (Player player in _currentLobby.Players)
-        {
-            //logger.Log(player.Data["PlayerName"].Value, this);
-            if (!players.Contains(player))
-            {
-                players.Add(player);
-            }
-        }
 
-        return players;
+        return _currentLobby.Players;
     }
 
     public Player GetCurrentPlayer()
@@ -359,13 +397,25 @@ public class LobbyManager : MonoBehaviour
         return null;
     }
 
+    public bool IsDM()
+    {
+        if(_currentLobby != null)
+            return AuthenticationService.Instance.PlayerId == _currentLobby.HostId;
+        return false;
+    }
+
+    public bool GetGameStarted()
+    {
+        return _gameStarted;
+    }
+
     public async void LeaveLobby()
     {
         try
         {
             logger.Log("Leave Lobby", this);
             string playerId = AuthenticationService.Instance.PlayerId;
-            if (_currentLobby.HostId.Equals(playerId))
+            if (_currentLobby == null || _currentLobby.HostId.Equals(playerId))
                 CloseLobby();
             else
                 await LobbyService.Instance.RemovePlayerAsync(_currentLobby.Id, AuthenticationService.Instance.PlayerId);
@@ -374,6 +424,7 @@ public class LobbyManager : MonoBehaviour
         {
             Debug.LogException(e, this);
         }
+        _currentLobby = null;
     }
 
     public async void KickPlayer(Player player)
@@ -393,7 +444,6 @@ public class LobbyManager : MonoBehaviour
         try
         {
             await LobbyService.Instance.DeleteLobbyAsync(_currentLobby.Id);
-            _currentLobby = null;
         }
         catch (LobbyServiceException e)
         {

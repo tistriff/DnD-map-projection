@@ -26,9 +26,13 @@ public class ScaleContentBox : MonoBehaviour
 
     private void ScaleImage(float scale)
     {
+        
         float scaleVal = scale / 10;
         scaleVal = Mathf.Clamp(scaleVal, -20, 20);
-        _img.sizeDelta = _img.sizeDelta + new Vector2(scaleVal, scaleVal);
+        Vector2 result = _img.sizeDelta + new Vector2(scaleVal, scaleVal);
+        if (result.magnitude <= new Vector2(20, 20).magnitude)
+            return;
+        _img.sizeDelta = result;
         ScaleBox();
     }
 
