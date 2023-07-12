@@ -74,9 +74,8 @@ public class LobbyUIUpdateController : MonoBehaviour
                 return;
             }
 
-            if (LobbyManager.Instance.GetGameStarted() && LobbyManager.Instance.GetCurrentPlayer().Data["ReadyState"].Value == "True")
+            if (!LobbyManager.Instance.GetGameStartedCode().Equals("") && LobbyManager.Instance.GetCurrentPlayer().Data[LobbyManager.KEY_PLAYER_READY].Value == "True")
             {
-                Debug.Log("Test");
                 ScenesManager.Instance.LoadGame();
                 return;
             }  
@@ -105,7 +104,7 @@ public class LobbyUIUpdateController : MonoBehaviour
         {
             element = Instantiate(_playerElementTemplate, rootElement.transform);
             Transform namePlate = element.transform.GetChild(0);
-            if (player.Data["ReadyState"].Value == "True")
+            if (player.Data[LobbyManager.KEY_PLAYER_READY].Value == "True")
             {
                 namePlate.GetComponent<Image>().color = Color.green;
             }
@@ -114,7 +113,7 @@ public class LobbyUIUpdateController : MonoBehaviour
                 namePlate.GetComponent<Image>().color = Color.white;
             }
 
-            namePlate.transform.Find("PlayerName").GetComponent<TMP_Text>().text = player.Data["PlayerName"].Value;
+            namePlate.transform.Find("PlayerName").GetComponent<TMP_Text>().text = player.Data[LobbyManager.KEY_PLAYER_NAME].Value;
             Button xBtn = namePlate.transform.Find("X").GetComponent<Button>();
             if (_isDM && player.Id != LobbyManager.Instance.GetCurrentPlayer().Id)
             {
@@ -129,9 +128,9 @@ public class LobbyUIUpdateController : MonoBehaviour
             }
 
             Transform playerConfig = element.transform.GetChild(1);
-            playerConfig.transform.Find("Icon").GetComponent<Image>().sprite = _iconsList.Find((sprite) => sprite.name.Equals(player.Data["Weapon"].Value));
+            playerConfig.transform.Find("Icon").GetComponent<Image>().sprite = _iconsList.Find((sprite) => sprite.name.Equals(player.Data[LobbyManager.KEY_PLAYER_WEAPON].Value));
 
-            if (ColorUtility.TryParseHtmlString(player.Data["Color"].Value, out Color newColor))
+            if (ColorUtility.TryParseHtmlString(player.Data[LobbyManager.KEY_PLAYER_COLOR].Value, out Color newColor))
                 playerConfig.transform.Find("Color").GetComponent<Image>().color = newColor;
 
             _currentPlayerList.Add(player);

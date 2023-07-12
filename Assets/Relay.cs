@@ -29,11 +29,11 @@ public class Relay : MonoBehaviour
         }
     }
 
-    public async Task<string> CreateRelay()
+    public async Task<string> CreateRelay(int maxPlayers)
     {
         try
         {
-            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(9);
+            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxPlayers-1);
 
             string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
 
@@ -41,6 +41,8 @@ public class Relay : MonoBehaviour
 
             RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
+
+            NetworkManager.Singleton.StartHost();
 
             return joinCode;
         }
@@ -51,7 +53,7 @@ public class Relay : MonoBehaviour
         }
     }
 
-    private async void JoinRelay(string joinCode)
+    public async void JoinRelay(string joinCode)
     {
         try
         {
@@ -59,6 +61,7 @@ public class Relay : MonoBehaviour
 
             RelayServerData relayServerData = new RelayServerData(joinAllocation, "dtls");
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
+            NetworkManager.Singleton.StartClient();
         }
         catch (RelayServiceException e)
         {

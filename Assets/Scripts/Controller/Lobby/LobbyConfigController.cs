@@ -51,27 +51,6 @@ public class LobbyConfigController : MonoBehaviour
         // Path: C:\Users
         // Icon: default (folder icon)
         FileBrowser.AddQuickLink("Users", "C:\\Users", null);
-
-        // Show a save file dialog 
-        // onSuccess event: not registered (which means this dialog is pretty useless)
-        // onCancel event: not registered
-        // Save file/folder: file, Allow multiple selection: false
-        // Initial path: "C:\", Initial filename: "Screenshot.png"
-        // Title: "Save As", Submit button text: "Save"
-        // FileBrowser.ShowSaveDialog( null, null, FileBrowser.PickMode.Files, false, "C:\\", "Screenshot.png", "Save As", "Save" );
-
-        // Show a select folder dialog 
-        // onSuccess event: print the selected folder's path
-        // onCancel event: print "Canceled"
-        // Load file/folder: folder, Allow multiple selection: false
-        // Initial path: default (Documents), Initial filename: empty
-        // Title: "Select Folder", Submit button text: "Select"
-        // FileBrowser.ShowLoadDialog( ( paths ) => { Debug.Log( "Selected: " + paths[0] ); },
-        //						   () => { Debug.Log( "Canceled" ); },
-        //						   FileBrowser.PickMode.Folders, false, null, null, "Select Folder", "Select" );
-
-        // Coroutine example
-        //StartCoroutine(ShowLoadDialogCoroutine());
     }
 
 
@@ -101,27 +80,9 @@ public class LobbyConfigController : MonoBehaviour
             _tex = new Texture2D(2, 2);
             _tex.LoadImage(bytes);
             _rasterImage.sprite = Sprite.Create(_tex, new Rect(0, 0, _tex.width, _tex.height), new Vector2(0.5f, 0.5f));
+            _rasterImage.SetNativeSize();
 
             _rasterWindowButton.interactable = true;
-            // Read the bytes of the first file via FileBrowserHelpers
-            // Contrary to File.ReadAllBytes, this function works on Android 10+, as well
-            //_tex = new Texture2D(2, 2);
-            //ImageConversion.LoadImage(_tex, FileBrowserHelpers.ReadBytesFromFile(FileBrowser.Result[0]));
-            /*if(IsOwner)
-            {
-				byte[] bytes = FileBrowserHelpers.ReadBytesFromFile(FileBrowser.Result[0]);
-				Texture2D tex = new Texture2D(2, 2);
-
-				ImageConversion.LoadImage(tex, bytes);
-				//tex.Compress(false);
-				//tex.GetRawTextureData();
-
-				bytes = ImageConversion.EncodeArrayToJPG(bytes, tex.graphicsFormat, (uint) tex.width, (uint) tex.height);
-
-				Debug.Log(bytes.Length);
-				//PlaceTextureClientRpc(Convert.FromBase64String(FileBrowserHelpers.ReadBytesFromFile(FileBrowser.Result[0]));
-				//PlaceTextureClientRpc(bytes);
-			}*/
 
 
             // Or, copy the first file to persistentDataPath
