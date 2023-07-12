@@ -1,18 +1,33 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class PanelButton : MonoBehaviour
+[RequireComponent(typeof(Image))]
+public class PanelButton : MonoBehaviour, IPointerClickHandler, IPointerExitHandler
 {
-    // Start is called before the first frame update
-    void Start()
+    [SerializeField] private PanelGroup _panelGroup;
+    [SerializeField] private Image _background;
+
+    public void OnPointerClick(PointerEventData eventData)
     {
-        
+        _panelGroup.OnPanelSelected(this);
     }
 
-    // Update is called once per frame
-    void Update()
+    void IPointerExitHandler.OnPointerExit(PointerEventData eventData)
     {
-        
+        _panelGroup.OnPanelExit(this);
+    }
+
+    void Start()
+    {
+        _background = GetComponent<Image>();
+        _panelGroup.Subscribe(this);
+    }
+
+    public void SetBackground(Sprite sprite)
+    {
+        _background.sprite = sprite;
     }
 }
