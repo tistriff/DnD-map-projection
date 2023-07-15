@@ -16,15 +16,6 @@ public class LobbyUIUpdateController : MonoBehaviour
     private List<Player> _currentPlayerList;
     private bool _isDM;
 
-    [Serializable]
-    public struct PlayerElement
-    {
-        public string name;
-        public Sprite icon;
-        public Color color;
-        public string playerId;
-    }
-
     [SerializeField] private GameObject _playerElementTemplate;
     [SerializeField] private GameObject _configMenu;
 
