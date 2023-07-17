@@ -18,15 +18,8 @@ public class ScaleContentBox : MonoBehaviour
         scrollAction.performed += context => ScaleImage(context.ReadValue<Vector2>().y);
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        //ScaleImage();
-    }
-
     private void ScaleImage(float scale)
     {
-        
         float scaleVal = scale / 10;
         scaleVal = Mathf.Clamp(scaleVal, -20, 20);
         Vector2 result = _img.sizeDelta + new Vector2(scaleVal, scaleVal);
@@ -40,5 +33,10 @@ public class ScaleContentBox : MonoBehaviour
     {
         RectTransform rt = transform.GetComponent<RectTransform>();
         rt.sizeDelta = _img.sizeDelta;
+    }
+
+    private void OnDisable()
+    {
+        new InputAction(binding: "<Mouse>/scroll").performed -= context => ScaleImage(context.ReadValue<Vector2>().y);
     }
 }

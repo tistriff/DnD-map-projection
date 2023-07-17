@@ -26,7 +26,6 @@ public class NetworkMangerUI : MonoBehaviour
         {
             NetworkManager.Singleton.StartClient();
         });
-        Debug.Log("Buttons Created");
     }
 
     // Update is called once per frame

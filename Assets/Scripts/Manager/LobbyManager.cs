@@ -7,6 +7,7 @@ using UnityEngine;
 using Unity.Services.Lobbies.Models;
 using System;
 using System.Linq;
+using UnityEngine.UI;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -24,10 +25,12 @@ public class LobbyManager : MonoBehaviour
     private float _heartbeatTimer = 0f;
     private float _heartbetTimerMax = 15;
     private float _lobbyPullTimer = 0f;
-    private float _lobbyPullTimerMax = 1.1f;
+    private float _lobbyPullTimerMax = 1.5f;
     private int _playerLimit = 10;
     private string _gameStartedCode = "";
     private bool _connected = false;
+
+    [SerializeField] private List<Texture2D> _mapTextures;
 
     public enum Role
     {
@@ -113,8 +116,11 @@ public class LobbyManager : MonoBehaviour
                 // sets the code to join the relay connection for better usage
                 _gameStartedCode = _currentLobby.Data[KEY_START_GAME].Value;
 
-                if(IsDM() && _gameStartedCode.Equals("") && CheckReady())
+                if(IsDM()
+                   && _gameStartedCode.Equals("")
+                   && CheckReady())
                 {
+                    Debug.Log("Start game");
                     StartGame();
                 }
 
@@ -123,6 +129,7 @@ public class LobbyManager : MonoBehaviour
                     && GetCurrentPlayer().Data[KEY_PLAYER_READY].Value == "True") // did the player already pressed ready?
                 {
                     // Join relay connection as Client
+                    Debug.Log("joined");
                     Relay.Instance.JoinRelay(_gameStartedCode);
                 }
             }
@@ -260,7 +267,7 @@ public class LobbyManager : MonoBehaviour
         return player;
     }
 
-    public async void UpdateLobbyConfig(string bytes, string raster)
+    public async void UpdateLobbyConfig(string index, string raster)
     {
         try
         {
@@ -268,7 +275,7 @@ public class LobbyManager : MonoBehaviour
             {
                 Data = new Dictionary<string, DataObject>
                 {
-                    {KEY_IMAGE, new DataObject(DataObject.VisibilityOptions.Member, bytes.Count().ToString())},
+                    {KEY_IMAGE, new DataObject(DataObject.VisibilityOptions.Member, index)},
                     {KEY_RASTER, new DataObject(DataObject.VisibilityOptions.Member, raster)},
                 }
             });
@@ -367,6 +374,7 @@ public class LobbyManager : MonoBehaviour
         string relayCode = await Relay.Instance.CreateRelay(_currentLobby.MaxPlayers);
         _connected = true;
         UpdateLobbyGameState(relayCode);
+        ScenesManager.Instance.LoadGame();
     }
 
     public Lobby GetCurrentLobby()
@@ -393,6 +401,16 @@ public class LobbyManager : MonoBehaviour
             return _currentLobby.LobbyCode;
 
         return null;
+    }
+
+    public List<Texture2D> GetMapList()
+    {
+        return _mapTextures;
+    }
+
+    public Texture2D GetSelectedMap()
+    {
+        return _mapTextures[int.Parse(_currentLobby.Data[KEY_IMAGE].Value)];
     }
 
     public bool IsDM()

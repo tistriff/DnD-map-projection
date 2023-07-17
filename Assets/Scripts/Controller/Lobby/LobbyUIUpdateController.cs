@@ -65,12 +65,6 @@ public class LobbyUIUpdateController : MonoBehaviour
                 return;
             }
 
-            if (!LobbyManager.Instance.GetGameStartedCode().Equals("") && LobbyManager.Instance.GetCurrentPlayer().Data[LobbyManager.KEY_PLAYER_READY].Value == "True")
-            {
-                ScenesManager.Instance.LoadGame();
-                return;
-            }  
-
             if (!CompareList(players))
                 createPlayerList(players);
 

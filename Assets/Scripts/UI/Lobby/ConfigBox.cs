@@ -53,7 +53,7 @@ public class ConfigBox: MonoBehaviour
         Button rastBtn = transElement.Find("RasterSelect").GetComponent<Button>();
         imgBtn.onClick.AddListener(() =>
         {
-            _configController.OpenFileBrowser(transElement.Find("SelectedImage").GetComponent<TMP_Text>(), rastBtn);
+            _configController.OpenImageSelection(transElement.Find("SelectedImage").GetComponent<TMP_Text>(), rastBtn);
         });
 
         

@@ -1,9 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class ScenesManager : MonoBehaviour
+public class ScenesManager : NetworkBehaviour
 {
     public static ScenesManager Instance;
     //[SerializeField]
@@ -34,11 +35,6 @@ public class ScenesManager : MonoBehaviour
         GameScene
     }
 
-    public void LoadScene(Scene scene)
-    {
-        SceneManager.LoadScene(scene.ToString());
-    }
-
     public void Exit()
     {
         Screen.orientation = ScreenOrientation.Portrait;
@@ -54,6 +50,12 @@ public class ScenesManager : MonoBehaviour
     public void LoadGame()
     {
         Screen.orientation = ScreenOrientation.LandscapeLeft;
-        SceneManager.LoadScene(Scene.GameScene.ToString());
+        string sceneName = Scene.GameScene.ToString();
+        var status = NetworkManager.SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+        if (status != SceneEventProgressStatus.Started)
+        {
+            Debug.LogWarning($"Failed to load {sceneName} " +
+                  $"with a {nameof(SceneEventProgressStatus)}: {status}");
+        }
     }
 }

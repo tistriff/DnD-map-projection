@@ -42,7 +42,7 @@ public class PlayerController : NetworkBehaviour
         }
         else
         {
-            //_currentPlayerList.Add(LobbyManager.Instance.GetCurrentPlayer());
+            _currentPlayerList.Add(LobbyManager.Instance.GetCurrentPlayer());
             UpdatePlayerList(_playerListObject);
         }
 
@@ -62,8 +62,6 @@ public class PlayerController : NetworkBehaviour
         _removeMenu_Panel.SetActive(false);
         _npcInputControl.SetActive(false);
     }
-
-
 
     void UpdatePlayerList(GameObject list)
     {

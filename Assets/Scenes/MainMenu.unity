@@ -1158,6 +1158,7 @@ GameObject:
   m_Component:
   - component: {fileID: 595154371}
   - component: {fileID: 595154372}
+  - component: {fileID: 595154373}
   m_Layer: 0
   m_Name: ScenesManager
   m_TagString: Untagged
@@ -1193,6 +1194,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _logger: {fileID: 1479604797}
+--- !u!114 &595154373
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 595154370}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 2725029623
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
 --- !u!1 &768902700
 GameObject:
   m_ObjectHideFlags: 0
@@ -2653,7 +2673,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15d59efd105ee754c860ccd8e3460d7e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  logger: {fileID: 1479604797}
+  _mapTextures:
+  - {fileID: 2800000, guid: e7df757aba3e54a11a832b1b8cbe5aaa, type: 3}
+  - {fileID: 2800000, guid: 3b2a773e413d3e84f8c7c757734af584, type: 3}
+  - {fileID: 2800000, guid: 293ea6a99c4ba134cae49556942ee0ff, type: 3}
+  - {fileID: 2800000, guid: a36153625af524c1f9fb6e04b5ed3e1c, type: 3}
+  - {fileID: 2800000, guid: 81da6e5b6342f8f47a5a3a24221306c6, type: 3}
+  - {fileID: 2800000, guid: dffef66376be4fa480fb02b19edbe903, type: 3}
+  - {fileID: 28684132378477856, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
 --- !u!1 &1479604795
 GameObject:
   m_ObjectHideFlags: 0
