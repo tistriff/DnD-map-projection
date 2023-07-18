@@ -25,7 +25,7 @@ public class LobbyManager : MonoBehaviour
     private float _heartbeatTimer = 0f;
     private float _heartbetTimerMax = 15;
     private float _lobbyPullTimer = 0f;
-    private float _lobbyPullTimerMax = 1.5f;
+    private float _lobbyPullTimerMax = 1.1f;
     private int _playerLimit = 10;
     private string _gameStartedCode = "";
     private bool _connected = false;
@@ -120,7 +120,6 @@ public class LobbyManager : MonoBehaviour
                    && _gameStartedCode.Equals("")
                    && CheckReady())
                 {
-                    Debug.Log("Start game");
                     StartGame();
                 }
 
@@ -143,7 +142,7 @@ public class LobbyManager : MonoBehaviour
 
     // Configures and creates the lobby and the Host Player to let him join automatically
     // Sets up the created lobby as the current lobby so the lobby controller can use the information to display them dynamically
-    public async void CreateLobby(Action<string> errorFunction)
+    public async void CreateLobby()
     {
         try
         {
@@ -176,7 +175,7 @@ public class LobbyManager : MonoBehaviour
             }
             else
             {
-                errorFunction("Lobby konnte nicht erstellt werden!");
+                Debug.LogError("Lobby konnte nicht erstellt werden!");
             }
         }
         catch (LobbyServiceException e)
@@ -279,6 +278,7 @@ public class LobbyManager : MonoBehaviour
                     {KEY_RASTER, new DataObject(DataObject.VisibilityOptions.Member, raster)},
                 }
             });
+            Debug.Log("updated");
         }
         catch (LobbyServiceException e)
         {
@@ -429,12 +429,9 @@ public class LobbyManager : MonoBehaviour
     {
         try
         {
-            Debug.Log("playerId");
             string playerId = AuthenticationService.Instance.PlayerId;
-            Debug.Log("currentLobby");
             if (IsDM() && _currentLobby != null)
             {
-                Debug.Log("Leave Lobby", this);
                 CloseLobby();
             }
             else if (_currentLobby != null)

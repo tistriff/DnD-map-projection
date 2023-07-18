@@ -57,7 +57,6 @@ public class LobbyConfigController : MonoBehaviour
         FileBrowser.AddQuickLink("Users", "C:\\Users", null);
 
         _maps = LobbyManager.Instance.GetMapList();
-        Debug.Log(_maps.Count);
     }
 
 
@@ -192,6 +191,7 @@ public class LobbyConfigController : MonoBehaviour
     public void UpdateLobbyConfig()
     {
         LobbyManager.Instance.UpdateLobbyConfig(_selectedMapIndex.ToString(), _gridSize.ToString());
+
         _readyWarn.SetActive(false);
     }
 

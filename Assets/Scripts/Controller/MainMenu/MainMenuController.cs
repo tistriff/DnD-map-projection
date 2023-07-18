@@ -12,7 +12,7 @@ public class MainMenuController : MonoBehaviour
 
     public void CreateGameSession(string role)
     {
-        LobbyManager.Instance.CreateLobby(SetError);
+        LobbyManager.Instance.CreateLobby();
     }
 
     public void QuickJoinGameSession()
@@ -37,6 +37,7 @@ public class MainMenuController : MonoBehaviour
         }
         else
         {
+            Debug.LogError("Lobby-ID benötigt!");
             SetError("Lobby-ID benötigt!");
         }
     }

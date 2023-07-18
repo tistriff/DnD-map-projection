@@ -46,26 +46,21 @@ public class PlayerController : NetworkBehaviour
             UpdatePlayerList(_playerListObject);
         }
 
-
-        bool isHost = NetworkManager.Singleton.IsHost;
-
-        RestrictMenu(isHost);
+        RestrictMenu(IsHost);
     }
 
 
-    private void RestrictMenu(bool isHost)
+    private void RestrictMenu(bool state)
     {
-        if (!isHost)
-            return;
-
-        _removeMenu_Button.SetActive(false);
-        _removeMenu_Panel.SetActive(false);
-        _npcInputControl.SetActive(false);
+        _removeMenu_Button.SetActive(state);
+        _removeMenu_Panel.SetActive(state);
+        _npcInputControl.SetActive(state);
     }
 
     void UpdatePlayerList(GameObject list)
     {
         ClearObjectList(list);
+        Debug.Log(_currentPlayerList.Count);
         foreach (Player player in _currentPlayerList)
         {
             GameObject element = Instantiate(_charakterPlatePrefab, list.transform);
@@ -102,7 +97,7 @@ public class PlayerController : NetworkBehaviour
 
     private void GetLatestPlayerList(ulong clientId)
     {
-        //_currentPlayerList = LobbyManager.Instance.GetPlayerList();
+        _currentPlayerList = LobbyManager.Instance.GetPlayerList();
         UpdatePlayerList(_playerListObject);
     }
 

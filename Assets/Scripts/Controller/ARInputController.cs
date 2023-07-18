@@ -7,8 +7,9 @@ using UnityEngine.XR.ARSubsystems;
 using EnhancedTouch = UnityEngine.InputSystem.EnhancedTouch;
 
 [RequireComponent(typeof(ARRaycastManager),typeof(ARPlaneManager))]
-public class Selection : MonoBehaviour
+public class ARInputController : MonoBehaviour
 {
+    [SerializeField] private PlacementController _placementController;
     public event OnVariableChangeDelegate OnVariableChange;
     public delegate void OnVariableChangeDelegate(ARRaycastHit newVal);
 
@@ -26,8 +27,10 @@ public class Selection : MonoBehaviour
                 OnVariableChange(_selectedObject);
         } 
     }
+
+    private float _prevMagnitude;
+
     private Color _selectionColor;
-    
     private GameObject _spawned_object;
 
     ARRaycastManager aRRaycastManager;
@@ -39,6 +42,7 @@ public class Selection : MonoBehaviour
         aRRaycastManager = GetComponent<ARRaycastManager>();
         aRPlaneManager = GetComponent<ARPlaneManager>();
         aRPlaneManager.enabled = true;
+        _prevMagnitude = 0;
     }
 
     private void OnEnable()
@@ -46,6 +50,7 @@ public class Selection : MonoBehaviour
         EnhancedTouch.TouchSimulation.Enable();
         EnhancedTouch.EnhancedTouchSupport.Enable();
         EnhancedTouch.Touch.onFingerDown += FingerDown;
+        EnhancedTouch.Touch.onFingerMove += FingerMove;
     }
 
     private void OnDisable()
@@ -53,6 +58,7 @@ public class Selection : MonoBehaviour
         EnhancedTouch.TouchSimulation.Disable();
         EnhancedTouch.EnhancedTouchSupport.Disable();
         EnhancedTouch.Touch.onFingerDown -= FingerDown;
+        EnhancedTouch.Touch.onFingerMove -= FingerMove;
     }
 
     private void FingerDown(EnhancedTouch.Finger finger)
@@ -65,9 +71,24 @@ public class Selection : MonoBehaviour
         }
     }
 
+    private void FingerMove(EnhancedTouch.Finger finger)
+    {
+        if (finger.index < 1)
+            return;
+
+        Debug.Log("Moved");
+        float magnitude = finger.lastTouch.screenPosition.magnitude - finger.currentTouch.screenPosition.magnitude;
+        if(_prevMagnitude == 0)
+        {
+            _prevMagnitude = magnitude;
+        }
+        float difference = magnitude - _prevMagnitude;
+        _placementController.ScaleBoard(difference);
+    }
+
     private void selectObject(List<ARRaycastHit> hits)
     {
-        _selectedObject = hits[0];
+        SelectedObjectProperty = hits[0];
     }
 
     public void SetSelectionColor(Color color)

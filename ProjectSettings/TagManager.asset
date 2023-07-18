@@ -12,6 +12,7 @@ TagManager:
   - ColorButton
   - WeaponButton
   - ARPlane
+  - Tile
   layers:
   - Default
   - TransparentFX

@@ -10,29 +10,29 @@ public class ScenesManager : NetworkBehaviour
     //[SerializeField]
     //private List<Scene> scenes;
 
-    [SerializeField]
-    private Logger _logger;
-
-    public void Awake()
-    {
-        Instance = this;
-        if (!SceneManager.GetActiveScene().name.Equals(Scene.MainMenu.ToString()) && LobbyManager.Instance.GetCurrentLobby() == null)
-            Exit();
-            
-    }
-
-    private void Start()
-    {
-        string scene = SceneManager.GetActiveScene().name;
-        if(scene.Equals("Lobby") || scene.Equals("MainMenu"))
-            Screen.orientation = ScreenOrientation.Portrait;
-    }
-
     public enum Scene
     {
         MainMenu,
         Lobby,
         GameScene
+    }
+
+    public void Awake()
+    {
+        Instance = this;
+        if (!SceneManager.GetActiveScene().name.Equals(Scene.MainMenu.ToString())
+            && LobbyManager.Instance.GetCurrentLobby() == null)
+            Exit();
+
+    }
+
+    private void Start()
+    {
+        string scene = SceneManager.GetActiveScene().name;
+        if (scene.Equals("Lobby") || scene.Equals("MainMenu"))
+            Screen.orientation = ScreenOrientation.Portrait;
+        else
+            Screen.orientation = ScreenOrientation.LandscapeLeft;
     }
 
     public void Exit()
