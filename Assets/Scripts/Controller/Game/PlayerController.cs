@@ -71,7 +71,9 @@ public class PlayerController : NetworkBehaviour
                 continue;*/
 
             GameObject element = Instantiate(_charakterPlatePrefab, list.transform);
-            element.GetComponent<ObjectHolder>().SetSpawnObject(_charakterModelPrefabs[int.Parse(player.Data[LobbyManager.KEY_PLAYER_WEAPON].Value)]);
+            GameObject charModel = _charakterModelPrefabs[int.Parse(player.Data[LobbyManager.KEY_PLAYER_WEAPON].Value)];
+            charModel.GetComponent<FigureInfo>().SetName(player.Data[LobbyManager.KEY_PLAYER_NAME].Value);
+            element.GetComponent<ObjectHolder>().SetSpawnObject(charModel);
 
             if (ColorUtility.TryParseHtmlString(player.Data[LobbyManager.KEY_PLAYER_COLOR].Value, out Color newColor))
                 element.GetComponent<Image>().color = newColor;
@@ -93,7 +95,9 @@ public class PlayerController : NetworkBehaviour
         foreach (NPC npc in _currentNPCList)
         {
             GameObject element = Instantiate(_charakterPlatePrefab, list.transform);
-            element.GetComponent<ObjectHolder>().SetSpawnObject(_charakterModelPrefabs[_charakterModelPrefabs.Count-1]);
+            GameObject charModel = _charakterModelPrefabs[_charakterModelPrefabs.Count - 1];
+            charModel.GetComponent<FigureInfo>().SetName(npc.GetName());
+            element.GetComponent<ObjectHolder>().SetSpawnObject(charModel);
 
             element.GetComponent<Image>().color = npc.GetColor();
             element.transform.Find("Playername").GetComponent<TMP_Text>().text = npc.GetName();

@@ -6,7 +6,7 @@ public class FigureInfo : MonoBehaviour
 {
     private string _modelName;
 
-    public void SetInfo(string name)
+    public void SetName(string name)
     {
         _modelName = name;
     }
