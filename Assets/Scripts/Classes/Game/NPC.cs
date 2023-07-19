@@ -5,9 +5,9 @@ public class NPC
     private int _id;
     private string _name;
     private Color _color;
-    private int _weapon;
+    private string _weapon;
 
-    public NPC(int id, string name, Color color, int weapon)
+    public NPC(int id, string name, Color color, string weapon)
     {
         _id = id;
         _name = name;
@@ -30,7 +30,7 @@ public class NPC
         return _color;
     }
 
-    public int GetWeapon()
+    public string GetWeapon()
     {
         return _weapon;
     }
@@ -45,7 +45,7 @@ public class NPC
         _color = color;
     }
 
-    public void SetWeapon(int weapon)
+    public void SetWeapon(string weapon)
     {
         _weapon = weapon;
     }

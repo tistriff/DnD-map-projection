@@ -13,13 +13,14 @@ public class LobbyManager : MonoBehaviour
 {
     public static LobbyManager Instance;
 
-    public static string KEY_IMAGE = "Image";
-    public static string KEY_RASTER = "Raster";
-    public static string KEY_START_GAME = "RelayCode";
-    public static string KEY_PLAYER_NAME = "Name";
-    public static string KEY_PLAYER_COLOR = "Color";
-    public static string KEY_PLAYER_WEAPON = "Weapon";
-    public static string KEY_PLAYER_READY = "ReadyState"; 
+    public const string KEY_IMAGE = "Image";
+    public const string KEY_RASTER = "Raster";
+    public const string KEY_START_GAME = "RelayCode";
+    public const string KEY_PLAYER_NAME = "Name";
+    public const string KEY_PLAYER_COLOR = "Color";
+    public const string KEY_PLAYER_WEAPON = "Weapon";
+    public const string KEY_PLAYER_READY = "ReadyState";
+    public const string PLAYER_WEAPON_STD = "1";
 
     private Lobby _currentLobby = null;
     private float _heartbeatTimer = 0f;
@@ -116,7 +117,7 @@ public class LobbyManager : MonoBehaviour
                 // sets the code to join the relay connection for better usage
                 _gameStartedCode = _currentLobby.Data[KEY_START_GAME].Value;
 
-                if(IsDM()
+                if (IsDM()
                    && _gameStartedCode.Equals("")
                    && CheckReady())
                 {
@@ -257,9 +258,9 @@ public class LobbyManager : MonoBehaviour
             Data = new Dictionary<string, PlayerDataObject>
                 {
                     {KEY_PLAYER_NAME, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, playerName) },
-                    {KEY_PLAYER_WEAPON, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "sword") },
+                    {KEY_PLAYER_WEAPON, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, PLAYER_WEAPON_STD) },
                     {KEY_PLAYER_COLOR, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "#" + colorString) },
-                    {KEY_PLAYER_READY, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "False") }
+                    {KEY_PLAYER_READY, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, false.ToString()) }
                 }
         };
 
@@ -278,7 +279,6 @@ public class LobbyManager : MonoBehaviour
                     {KEY_RASTER, new DataObject(DataObject.VisibilityOptions.Member, raster)},
                 }
             });
-            Debug.Log("updated");
         }
         catch (LobbyServiceException e)
         {
@@ -361,7 +361,7 @@ public class LobbyManager : MonoBehaviour
 
     private bool CheckReady()
     {
-        foreach(Player player in _currentLobby.Players)
+        foreach (Player player in _currentLobby.Players)
         {
             if (player.Data[KEY_PLAYER_READY].Value == "False")
                 return false;
@@ -415,7 +415,7 @@ public class LobbyManager : MonoBehaviour
 
     public bool IsDM()
     {
-        if(_currentLobby != null)
+        if (_currentLobby != null)
             return AuthenticationService.Instance.PlayerId == _currentLobby.HostId;
         return false;
     }

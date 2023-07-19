@@ -13,6 +13,9 @@ TagManager:
   - WeaponButton
   - ARPlane
   - Tile
+  - Terrain
+  - SelectionCircle
+  - Figure
   layers:
   - Default
   - TransparentFX
@@ -20,7 +23,7 @@ TagManager:
   - 
   - Water
   - UI
-  - 
+  - RaycastObject
   - 
   - 
   - 

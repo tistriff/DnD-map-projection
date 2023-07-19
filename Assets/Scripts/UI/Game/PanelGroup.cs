@@ -17,6 +17,9 @@ public class PanelGroup : MonoBehaviour
             _panelButtons = new List<PanelButton>();
 
         _panelButtons.Add(btn);
+
+        if (_selectedPanel == null)
+            OnPanelSelected(btn);
     }
 
     public void OnPanelExit(PanelButton btn)

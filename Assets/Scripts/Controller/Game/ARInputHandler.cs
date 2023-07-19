@@ -6,36 +6,38 @@ using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 using EnhancedTouch = UnityEngine.InputSystem.EnhancedTouch;
 
-[RequireComponent(typeof(ARRaycastManager),typeof(ARPlaneManager))]
-public class ARInputController : MonoBehaviour
+[RequireComponent(typeof(ARRaycastManager), typeof(ARPlaneManager))]
+public class ARInputHandler : MonoBehaviour
 {
     [SerializeField] private PlacementController _placementController;
     public event OnVariableChangeDelegate OnVariableChange;
-    public delegate void OnVariableChangeDelegate(ARRaycastHit newVal);
+    public delegate void OnVariableChangeDelegate(RaycastHit newVal);
 
-    private ARRaycastHit _selectedObject;
-    public ARRaycastHit SelectedObjectProperty{
-        get {
+    private RaycastHit _selectedObject;
+    public RaycastHit SelectedObjectProperty
+    {
+        get
+        {
             return _selectedObject;
         }
-        
+
         set
         {
-            if (_selectedObject == value) return;
+            if (_selectedObject.Equals(value)) return;
             _selectedObject = value;
             if (OnVariableChange != null)
                 OnVariableChange(_selectedObject);
-        } 
+        }
     }
 
     private float _prevMagnitude;
 
-    private Color _selectionColor;
-    private GameObject _spawned_object;
-
     ARRaycastManager aRRaycastManager;
     ARPlaneManager aRPlaneManager;
     List<ARRaycastHit> hits = new List<ARRaycastHit>();
+
+    [SerializeField] private LayerMask _layerMask;
+    [SerializeField] private Camera _aRCamera;
 
     void Awake()
     {
@@ -65,10 +67,21 @@ public class ARInputController : MonoBehaviour
     {
         if (finger.index != 0) return;
 
-        if(aRRaycastManager.Raycast(finger.currentTouch.screenPosition, hits, TrackableType.PlaneWithinPolygon))
+        if (aRPlaneManager.isActiveAndEnabled && aRRaycastManager.Raycast(finger.currentTouch.screenPosition, hits, TrackableType.PlaneWithinPolygon))
         {
-            selectObject(hits);
+            _placementController.SelectGameboardPlacement(hits[0]);
+            TogglePlaneDetection(false);
+        } else
+        {
+            Ray ray = _aRCamera.ScreenPointToRay(finger.currentTouch.screenPosition);
+            RaycastHit hitObject;
+
+            if(Physics.Raycast(ray, out hitObject, 20f, _layerMask))
+            {
+                selectObject(hitObject);
+            }
         }
+
     }
 
     private void FingerMove(EnhancedTouch.Finger finger)
@@ -76,23 +89,29 @@ public class ARInputController : MonoBehaviour
         if (finger.index < 1)
             return;
 
-        Debug.Log("Moved");
         float magnitude = finger.lastTouch.screenPosition.magnitude - finger.currentTouch.screenPosition.magnitude;
-        if(_prevMagnitude == 0)
+        if (_prevMagnitude == 0)
         {
+            Debug.Log("Mag changed");
             _prevMagnitude = magnitude;
         }
         float difference = magnitude - _prevMagnitude;
+        Debug.Log(difference);
         _placementController.ScaleBoard(difference);
     }
 
-    private void selectObject(List<ARRaycastHit> hits)
+    private void selectObject(RaycastHit hitObject)
     {
-        SelectedObjectProperty = hits[0];
+        SelectedObjectProperty = hitObject;
     }
 
-    public void SetSelectionColor(Color color)
+    public void TogglePlaneDetection(bool state)
     {
-        _selectionColor = color;
+        aRPlaneManager.enabled = state;
+
+        foreach (ARPlane plane in aRPlaneManager.trackables)
+        {
+            plane.gameObject.SetActive(state);
+        }
     }
 }

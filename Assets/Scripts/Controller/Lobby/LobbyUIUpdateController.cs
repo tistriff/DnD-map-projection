@@ -6,6 +6,7 @@ using TMPro;
 using Unity.Services.Lobbies.Models;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.UI;
 
 public class LobbyUIUpdateController : MonoBehaviour
@@ -113,7 +114,7 @@ public class LobbyUIUpdateController : MonoBehaviour
             }
 
             Transform playerConfig = element.transform.GetChild(1);
-            playerConfig.transform.Find("Icon").GetComponent<Image>().sprite = _iconsList.Find((sprite) => sprite.name.Equals(player.Data[LobbyManager.KEY_PLAYER_WEAPON].Value));
+            playerConfig.transform.Find("Icon").GetComponent<Image>().sprite = _iconsList[int.Parse(player.Data[LobbyManager.KEY_PLAYER_WEAPON].Value)];
 
             if (ColorUtility.TryParseHtmlString(player.Data[LobbyManager.KEY_PLAYER_COLOR].Value, out Color newColor))
                 playerConfig.transform.Find("Color").GetComponent<Image>().color = newColor;

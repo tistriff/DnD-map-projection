@@ -8,16 +8,21 @@ using UnityEngine.UI;
 
 public class PlayerController : NetworkBehaviour
 {
-    [SerializeField] private List<Player> _currentPlayerList;
-    [SerializeField] private GameObject _playerListObject;
-    [SerializeField] private List<NPC> _currentNPCList;
-    [SerializeField] private GameObject _npcListObject;
+    private List<Player> _currentPlayerList;
+    [SerializeField] private GameObject _uIPlayerList;
+    private List<NPC> _currentNPCList;
+    [SerializeField] private GameObject _uINpcList;
 
     [SerializeField] private GameObject _charakterPlatePrefab;
+    [SerializeField] private List<GameObject> _charakterModelPrefabs;
 
+    // Non-Host System References for Restriction
     [SerializeField] private GameObject _removeMenu_Button;
     [SerializeField] private GameObject _removeMenu_Panel;
     [SerializeField] private GameObject _npcInputControl;
+
+
+    [SerializeField] private PlacementController _placementController;
 
     private int _npcID;
 
@@ -43,7 +48,7 @@ public class PlayerController : NetworkBehaviour
         else
         {
             _currentPlayerList.Add(LobbyManager.Instance.GetCurrentPlayer());
-            UpdatePlayerList(_playerListObject);
+            UpdatePlayerList(_uIPlayerList);
         }
 
         RestrictMenu(IsHost);
@@ -60,16 +65,24 @@ public class PlayerController : NetworkBehaviour
     void UpdatePlayerList(GameObject list)
     {
         ClearObjectList(list);
-        Debug.Log(_currentPlayerList.Count);
         foreach (Player player in _currentPlayerList)
         {
+            /*if (player.Id == LobbyManager.Instance.GetCurrentLobby().HostId)
+                continue;*/
+
             GameObject element = Instantiate(_charakterPlatePrefab, list.transform);
+            element.GetComponent<ObjectHolder>().SetSpawnObject(_charakterModelPrefabs[int.Parse(player.Data[LobbyManager.KEY_PLAYER_WEAPON].Value)]);
 
             if (ColorUtility.TryParseHtmlString(player.Data[LobbyManager.KEY_PLAYER_COLOR].Value, out Color newColor))
                 element.GetComponent<Image>().color = newColor;
 
             element.transform.Find("Playername").GetComponent<TMP_Text>().text = player.Data[LobbyManager.KEY_PLAYER_NAME].Value;
             element.transform.Find("X").gameObject.SetActive(false);
+
+            //GameObject objectInstance = element.gameObject;
+            element.GetComponent<Button>().onClick.AddListener(() => {
+                _placementController.SetSpawnObject(element);
+            });
         }
     }
 
@@ -80,6 +93,7 @@ public class PlayerController : NetworkBehaviour
         foreach (NPC npc in _currentNPCList)
         {
             GameObject element = Instantiate(_charakterPlatePrefab, list.transform);
+            element.GetComponent<ObjectHolder>().SetSpawnObject(_charakterModelPrefabs[_charakterModelPrefabs.Count-1]);
 
             element.GetComponent<Image>().color = npc.GetColor();
             element.transform.Find("Playername").GetComponent<TMP_Text>().text = npc.GetName();
@@ -98,7 +112,7 @@ public class PlayerController : NetworkBehaviour
     private void GetLatestPlayerList(ulong clientId)
     {
         _currentPlayerList = LobbyManager.Instance.GetPlayerList();
-        UpdatePlayerList(_playerListObject);
+        UpdatePlayerList(_uIPlayerList);
     }
 
 
@@ -124,13 +138,16 @@ public class PlayerController : NetworkBehaviour
         ScenesManager.Instance.Exit();
     }
 
-
-
     public void AddNPC(TMP_Text textfield)
     {
-        NPC npc = new NPC(_npcID++, textfield.text, Color.white, 1);
+        string name = textfield.text;
+        if (_currentNPCList.Find(npc => npc.GetName().Equals(name)) != null
+            || _currentPlayerList.Find(player => player.Data[LobbyManager.KEY_PLAYER_NAME].Value.Equals(name)) != null)
+            return;
+
+        NPC npc = new NPC(_npcID++, textfield.text, Color.red, LobbyManager.PLAYER_WEAPON_STD);
         _currentNPCList.Add(npc);
-        UpdateNPCList(_npcListObject);
+        UpdateNPCList(_uINpcList);
     }
 
     public void SetNPCColor(int id, Color color)
@@ -143,6 +160,6 @@ public class PlayerController : NetworkBehaviour
         if (_currentNPCList.Count <= 0)
             return;
         _currentNPCList.Remove(_currentNPCList.Find((npc) => npc.GetID() == id));
-        UpdateNPCList(_npcListObject);
+        UpdateNPCList(_uINpcList);
     }
 }

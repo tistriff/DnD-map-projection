@@ -4,35 +4,15 @@ using UnityEngine;
 
 public class FigureInfo : MonoBehaviour
 {
-    private struct Info
+    private string _modelName;
+
+    public void SetInfo(string name)
     {
-        public int playerID;
-        public int weaponIndex;
-        public Color playerColor;
+        _modelName = name;
     }
 
-    private Info _info;
-
-    public void SetInfo(int id, int weapon, Color color)
+    public string GetName()
     {
-        _info = new Info
-        {
-            playerID = id,
-            weaponIndex = weapon,
-            playerColor = color,
-        };
-    }
-
-    public int GetID()
-    {
-        return _info.playerID;
-    }
-    public int GetWeapon()
-    {
-        return _info.weaponIndex;
-    }
-    public Color GetColor()
-    {
-        return _info.playerColor;
+        return _modelName;
     }
 }
