@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class GameboardTile : MonoBehaviour
 {
-    private List<GameObject> _terrainMarker;
+    public List<GameObject> _terrainMarker;
     private GameObject _figure;
 
-    private void Start()
+    private void Awake()
     {
         _terrainMarker = new List<GameObject>();
         _figure = null;
@@ -18,14 +18,23 @@ public class GameboardTile : MonoBehaviour
         _terrainMarker.Add(terrain);
     }
 
+    public void RemoveTerrainMarker(GameObject terrain)
+    {
+        if (_terrainMarker.Remove(terrain))
+            Destroy(terrain);
+    }
+
     public List<GameObject> GetTerrainList()
     {
         return _terrainMarker;
     }
 
-    public void ClearNullElements()
+    public void ClearTerrainList()
     {
-        _terrainMarker.Remove(null);
+        foreach (GameObject terrain in _terrainMarker)
+            Destroy(terrain);
+
+        _terrainMarker = new List<GameObject>();
     }
 
     public void SetFigure(GameObject figure)

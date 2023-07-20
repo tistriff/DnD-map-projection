@@ -16,6 +16,7 @@ TagManager:
   - Terrain
   - SelectionCircle
   - Figure
+  - Dice
   layers:
   - Default
   - TransparentFX

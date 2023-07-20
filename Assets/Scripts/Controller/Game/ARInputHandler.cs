@@ -89,13 +89,13 @@ public class ARInputHandler : MonoBehaviour
         if (finger.index < 1)
             return;
 
-        float magnitude = finger.lastTouch.screenPosition.magnitude - finger.currentTouch.screenPosition.magnitude;
+        Vector2 fingerVector = finger.lastTouch.screenPosition - finger.currentTouch.screenPosition;
+        Debug.Log("Magnitude des Fingervectors: " + fingerVector.magnitude);
         if (_prevMagnitude == 0)
         {
-            Debug.Log("Mag changed");
-            _prevMagnitude = magnitude;
+            _prevMagnitude = fingerVector.magnitude;
         }
-        float difference = magnitude - _prevMagnitude;
+        float difference = fingerVector.magnitude - _prevMagnitude;
         Debug.Log(difference);
         _placementController.ScaleBoard(difference);
     }

@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 8902252218379239545}
   - component: {fileID: 7048570930255287171}
   - component: {fileID: 446695357567410324}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: mage
   m_TagString: Figure
   m_Icon: {fileID: 0}

@@ -1,10 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.ARFoundation;
 
-public class PlacementController : MonoBehaviour
+public class PlacementController : NetworkBehaviour
 {
     private GameObject _spawnObject;
     private Color _objectColor;
@@ -15,12 +16,14 @@ public class PlacementController : MonoBehaviour
     private GameObject _lastSelected;
 
     private int _raster;
-    private static string SHADER_TEXTURE_NAME = "_MainTex";
+    private const string SHADER_TEXTURE_NAME = "_MainTex";
 
     [SerializeField] private ARInputHandler _aRInputHandler;
     [SerializeField] private GameObject _prefabGameboard;
     [SerializeField] private GameObject _prefabTile;
     [SerializeField] private GameObject _prefabSelectionCircle;
+    [SerializeField] private DetailViewHandler _detailViewHandler;
+    [SerializeField] private GameObject _removeMenu;
 
     public const string TAG_PLANE = "ARPlane";
     public const string TAG_BOARD = "Gameboard";
@@ -37,6 +40,8 @@ public class PlacementController : MonoBehaviour
         _aRInputHandler.OnVariableChange += SelectArtifactPlacement;
         _localGameboard = null;
         _raster = int.Parse(LobbyManager.Instance.GetCurrentLobby().Data[LobbyManager.KEY_RASTER].Value);
+        if (_raster == 0)
+            _raster = 1;
         _selections = new List<GameObject>();
         _dice = new List<GameObject>();
         _figures = new List<GameObject>();
@@ -75,17 +80,16 @@ public class PlacementController : MonoBehaviour
             Texture2D tex = LobbyManager.Instance.GetSelectedMap();
             gameboard.GetComponent<Renderer>().material.SetTexture(SHADER_TEXTURE_NAME, tex);
 
-            Vector2 tileSizeVal = new Vector2(1f / _raster, 1f / _raster);
+            float tileSizeVal = 1f / _raster;
 
             for (int z = 0; z < _raster; z++)
             {
                 for (int x = 0; x < _raster; x++)
                 {
-                    _prefabTile.transform.localScale = new Vector3(tileSizeVal.x, 0.5f, tileSizeVal.y);
+                    _prefabTile.transform.localScale = new Vector3(tileSizeVal, 0.5f, tileSizeVal);
                     GameObject tile = Instantiate(_prefabTile, gameboard.transform);
-                    tile.transform.localPosition = new Vector3(tileSizeVal.x * x - 0.5f + tileSizeVal.x / 2, 0.5f, tileSizeVal.y * z - 0.5f + tileSizeVal.y / 2);
+                    tile.transform.localPosition = new Vector3(tileSizeVal * x - 0.5f + tileSizeVal / 2, 0.5f, tileSizeVal * z - 0.5f + tileSizeVal / 2);
                 }
-
             }
 
             return gameboard;
@@ -101,8 +105,8 @@ public class PlacementController : MonoBehaviour
 
     private void SelectArtifactToPlace(GameObject root)
     {
-        if (_objectColor == Color.black && ColorUtility.TryParseHtmlString(LobbyManager.Instance.GetCurrentPlayer().Data[LobbyManager.KEY_PLAYER_COLOR].Value, out Color newColor))
-            _objectColor = newColor;
+        if (_objectColor == Color.black)
+            _objectColor = GetCurrentPlayerColor();
 
         if (_spawnObject == null)
             _spawnObject = _prefabSelectionCircle;
@@ -124,12 +128,18 @@ public class PlacementController : MonoBehaviour
                 break;
         }
 
+        if (IsHost && _removeMenu.activeSelf)
+            _detailViewHandler.CreateView(root, this, root.tag.Equals(TAG_TILE));
+
         //PlaceObject(gameObject, _spawnObject, _objectColor);
         ResetPlacementInfo();
     }
 
     private void PlaceTerrain(GameObject tile, GameObject terrainPrefab, Color color)
     {
+        if (!tile.tag.Equals(TAG_TILE))
+            tile = tile.transform.parent.gameObject;
+
         GameboardTile tileClass = tile.GetComponent<GameboardTile>();
         List<GameObject> terrainList = tileClass.GetTerrainList();
 
@@ -139,28 +149,34 @@ public class PlacementController : MonoBehaviour
 
         Transform verticalParent = tile.transform.GetChild(0);
         int vertChildCount = verticalParent.childCount;
-        Transform horizontalParent = verticalParent.GetChild(vertChildCount - 1);
-        int horiChildCount = horizontalParent.childCount;
-
-        if (horiChildCount >= TERRAIN_LIMIT)
+        Transform horizontalParent = null;
+        foreach (Transform child in verticalParent)
         {
-            Debug.Log("new Limit");
-            horizontalParent = Instantiate(horizontalParent.gameObject, verticalParent).transform;
+            if (child.childCount < TERRAIN_LIMIT)
+            {
+                horizontalParent = child;
+                break;
+            }
+        }
+
+        if (horizontalParent == null)
+        {
+            horizontalParent = Instantiate(verticalParent.GetChild(0), verticalParent).transform;
             foreach (Transform child in horizontalParent)
                 Destroy(child.gameObject);
         }
 
-        Debug.Log(terrainPrefab.name);
-        Debug.Log(horizontalParent.name);
         GameObject terrainHolder = Instantiate(terrainPrefab, horizontalParent);
         terrainHolder.transform.GetChild(0).GetComponent<Renderer>().material.color = color;
-        Debug.Log("Terrain added");
 
         tileClass.AddTerrainMarker(terrainHolder);
     }
 
     private void PlaceFigure(GameObject tile, GameObject figurePrefab, Color color)
     {
+        if (!tile.tag.Equals(TAG_TILE))
+            return;
+
         GameboardTile tileClass = tile.GetComponent<GameboardTile>();
 
         if (tileClass.GetFigure() != null)
@@ -168,18 +184,22 @@ public class PlacementController : MonoBehaviour
 
         GameObject figure = _figures.Find(figure => figure.GetComponent<FigureInfo>().GetName().Equals(figurePrefab.GetComponent<FigureInfo>().GetName()));
         if (figure != null)
+        {
             figure.transform.parent.GetComponent<GameboardTile>().SetFigure(null);
+            figure.transform.parent = tile.transform;
+        }
         else
         {
             figure = Instantiate(figurePrefab, tile.transform);
-            figure.transform.localScale = new Vector3(0.8f, 4000f, 0.8f);
+            figure.transform.localScale = new Vector3(0.8f, 40f, 0.8f);
+            figure.GetComponent<Renderer>().material.color = color;
+            _figures.Add(figure);
         }
 
-        figure.transform.parent = tile.transform;
-        
+
+
         float newYPos = 0.5f + figure.transform.localScale.y / 2;
         figure.transform.localPosition = new Vector3(0f, newYPos, 0f);
-        figure.GetComponent<Renderer>().material.color = color;
 
         tileClass.SetFigure(figure.gameObject);
     }
@@ -192,9 +212,9 @@ public class PlacementController : MonoBehaviour
         {
             selectionCircle = Instantiate(selectionPrefab, selectionPos, tile.transform.rotation);
             selectionCircle.transform.localScale = new Vector3(
-                _localGameboard.transform.lossyScale.x / _raster * 0.9f,
+                _localGameboard.transform.lossyScale.x / _raster * 0.5f,
                 _localGameboard.transform.lossyScale.x / _raster * 0.25f,
-                _localGameboard.transform.lossyScale.z / _raster * 0.9f);
+                _localGameboard.transform.lossyScale.z / _raster * 0.5f);
         }
 
         float newYPos = selectionPos.y + tile.transform.lossyScale.y / 2 + selectionCircle.transform.lossyScale.y / 2;
@@ -208,6 +228,93 @@ public class PlacementController : MonoBehaviour
     {
         _spawnObject = null;
         _objectColor = Color.black;
+    }
+
+    public void RemoveTerrain(GameObject rootTile, GameObject terrain)
+    {
+        rootTile.GetComponent<GameboardTile>().RemoveTerrainMarker(terrain);
+    }
+
+    public void RemoveArtifact(GameObject artifact)
+    {
+        Transform parent = artifact.transform.parent;
+        if (parent != null && parent.tag.Equals(TAG_TILE))
+        {
+            parent.GetComponent<GameboardTile>().SetFigure(null);
+            _figures.Remove(artifact);
+        }
+        else
+            _dice.Remove(artifact);
+        Destroy(artifact);
+    }
+
+    public void ProcessDice(GameObject diceButtonObject)
+    {
+        diceButtonObject.GetComponent<Button>().interactable = false;
+        Color playerColor = GetCurrentPlayerColor();
+        GameObject dice = diceButtonObject.GetComponent<ObjectHolder>().GetSpawnObject();
+        int startIndex = Random.Range(0, 5);
+        Quaternion startRot = Random.rotation;
+        dice.GetComponent<Rigidbody>().useGravity = false;
+        ThrowDice(dice, startIndex, startRot, playerColor);
+        diceButtonObject.GetComponent<Button>().interactable = true;
+    }
+
+    public void ThrowDice(GameObject dicePrefab, int startIndex, Quaternion startRot, Color color)
+    {
+        if (_localGameboard == null)
+            return;
+
+        Vector3 startPos = _localGameboard.transform.Find("Walls").GetChild(startIndex).position;
+        Vector3 direction = _localGameboard.transform.position - startPos;
+        startPos += direction / _raster;
+
+        GameObject diceObject = _dice.Find((dice) => dice.GetComponent<Renderer>().material.color == color
+        && dice.GetComponent<Dice>().GetMax() == dicePrefab.GetComponent<Dice>().GetMax());
+        if (diceObject != null)
+        {
+            diceObject.transform.position = startPos;
+            diceObject.transform.rotation = startRot;
+        }
+        else
+        {
+            diceObject = Instantiate(dicePrefab, startPos, startRot);
+            Vector3 lossyScale = _localGameboard.transform.lossyScale;
+            Vector2 tileSizeVal = new Vector2(lossyScale.x/_raster, lossyScale.z/_raster);
+            diceObject.transform.localScale = new Vector3(tileSizeVal.x/2, tileSizeVal.x/2, tileSizeVal.y/2);
+            diceObject.GetComponent<Renderer>().material.color = color;
+        }
+
+        Rigidbody body = diceObject.GetComponent<Rigidbody>();
+        body.useGravity = true;
+        body.velocity = direction;
+        body.angularVelocity = direction * 0.5f;
+
+        _dice.Add(diceObject);
+    }
+
+    public void ClearDice()
+    {
+        Color playerColor = GetCurrentPlayerColor();
+
+        ClearDiceFromPlayer(playerColor);
+    }
+
+    private void ClearDiceFromPlayer(Color color)
+    {
+        List<GameObject> diceObjects = _dice.FindAll((dice) => dice.GetComponent<Renderer>().material.color == color);
+        _dice.RemoveAll((dice) => dice.GetComponent<Renderer>().material.color == color);
+
+        foreach (GameObject dice in diceObjects)
+            Destroy(dice);
+    }
+
+    private Color GetCurrentPlayerColor()
+    {
+        if (ColorUtility.TryParseHtmlString(LobbyManager.Instance.GetCurrentPlayer().Data[LobbyManager.KEY_PLAYER_COLOR].Value, out Color newColor))
+            return newColor;
+
+        return Color.black;
     }
 
     public void ScaleBoard(float scale)

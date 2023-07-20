@@ -72,7 +72,6 @@ public class PlayerController : NetworkBehaviour
 
             GameObject element = Instantiate(_charakterPlatePrefab, list.transform);
             GameObject charModel = _charakterModelPrefabs[int.Parse(player.Data[LobbyManager.KEY_PLAYER_WEAPON].Value)];
-            charModel.GetComponent<FigureInfo>().SetName(player.Data[LobbyManager.KEY_PLAYER_NAME].Value);
             element.GetComponent<ObjectHolder>().SetSpawnObject(charModel);
 
             if (ColorUtility.TryParseHtmlString(player.Data[LobbyManager.KEY_PLAYER_COLOR].Value, out Color newColor))
@@ -82,7 +81,12 @@ public class PlayerController : NetworkBehaviour
             element.transform.Find("X").gameObject.SetActive(false);
 
             //GameObject objectInstance = element.gameObject;
-            element.GetComponent<Button>().onClick.AddListener(() => {
+            string name = player.Data[LobbyManager.KEY_PLAYER_NAME].Value;
+            element.GetComponent<Button>().onClick.AddListener(() =>
+            {
+                GameObject model = element.GetComponent<ObjectHolder>().GetSpawnObject();
+                model.GetComponent<FigureInfo>().SetName(name);
+                element.GetComponent<ObjectHolder>().SetSpawnObject(model);
                 _placementController.SetSpawnObject(element);
             });
         }
@@ -118,8 +122,6 @@ public class PlayerController : NetworkBehaviour
         _currentPlayerList = LobbyManager.Instance.GetPlayerList();
         UpdatePlayerList(_uIPlayerList);
     }
-
-
 
     public void DisconnectFromSession()
     {
