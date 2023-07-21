@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.UI;
+using System.Timers;
+using System.Collections;
 
 public class FileManager : MonoBehaviour
 {
@@ -14,6 +16,7 @@ public class FileManager : MonoBehaviour
     [SerializeField] int _RasterSize;
     [SerializeField] string _testString;
     [SerializeField] GameObject _testTile;
+    [SerializeField] GameObject _endTile;
 
 
     [SerializeField] private GameObject _prefabTilePanel;
@@ -26,16 +29,28 @@ public class FileManager : MonoBehaviour
     private const string NAME_CONTENT = "Content";
     private const string NAME_DESTROY = "Destroy";
 
+
     private List<GameObject> _figures;
 
     private Vector3 _startPos = Vector3.zero;
     private Quaternion _startRot;
 
+
+    private const int MOVE_STRAIGHT_COST = 10;
+    private const int MOVE_DIAGONAL_COST = 14;
+    private GameObject _activeFigure;
+    private List<GameboardTile> openList;
+    private List<GameboardTile> closedList;
+
+    public List<GameboardTile> _path;
+    public float _desiredDuration = 3f;
+    public float _elapsedTime;
+
     private void Start()
     {
         Place();
-        //_figures = new List<GameObject>();
-        //_figurePrefab.GetComponent<FigureInfo>().SetName(_testString);
+        _figures = new List<GameObject>();
+        _figurePrefab.GetComponent<FigureInfo>().SetName(_testString);
         //AddTerrainToTile(_board.transform.GetChild(0).gameObject);
         //AddTerrainToTile(_board.transform.GetChild(0).gameObject);
         //AddTerrainToTile(_board.transform.GetChild(0).gameObject);
@@ -48,8 +63,9 @@ public class FileManager : MonoBehaviour
     public void PlaceTexture()
     {
         //AddToTile();
-        //AddFigureToTile(_testTile);
-        CreateTileView(_testTile);
+        AddFigureToTile(_testTile);
+        //CreateTileView(_testTile);
+
     }
 
     private void TestString()
@@ -73,6 +89,7 @@ public class FileManager : MonoBehaviour
     private void Place()
     {
         _board.GetComponent<Renderer>().material.SetTexture("_MainTex", _tex);
+        _board.GetComponent<Gameboard>().SetArry(_RasterSize);
 
         Vector3 scale = _board.transform.localScale;
         Vector2 tileSizeVal = new Vector2(1f / _RasterSize, 1f / _RasterSize);
@@ -84,8 +101,9 @@ public class FileManager : MonoBehaviour
                 _tilePrefab.transform.localScale = new Vector3(tileSizeVal.x, scale.y / 2, tileSizeVal.y);
                 GameObject element = Instantiate(_tilePrefab, _board.transform);
                 element.transform.localPosition = new Vector3(tileSizeVal.x * x - 0.5f + tileSizeVal.x / 2, 0.5f, tileSizeVal.y * z - 0.5f + tileSizeVal.y / 2);
+                GameboardTile tileClass = element.GetComponent<GameboardTile>();
+                _board.GetComponent<Gameboard>().AddTile(tileClass, new Vector2Int(x, z));
             }
-
         }
     }
 
@@ -130,14 +148,11 @@ public class FileManager : MonoBehaviour
         GameObject figure = _figures.Find(figure => figure.GetComponent<FigureInfo>().GetName().Equals(_figurePrefab.GetComponent<FigureInfo>().GetName()));
         if (figure != null)
         {
-            Debug.Log("figure bereits gesetzt");
             figure.transform.parent.GetComponent<GameboardTile>().SetFigure(null);
             figure.transform.parent = tile.transform;
-            Debug.Log("figure von parent entfernt");
         }
         else
         {
-            Debug.Log("figure neu setzen");
             figure = Instantiate(_figurePrefab, tile.transform);
             figure.transform.localScale = new Vector3(0.8f, 40f, 0.8f);
             _figures.Add(figure);
@@ -148,6 +163,7 @@ public class FileManager : MonoBehaviour
         figure.transform.position = new Vector3(selectionPos.x, newYPos, selectionPos.z);
 
         tileClass.SetFigure(figure.gameObject);
+        _activeFigure = figure.gameObject;
     }
 
     private void CreateTileView(GameObject tile)
@@ -207,5 +223,173 @@ public class FileManager : MonoBehaviour
         body.angularVelocity = Vector3.zero;
         _dice.transform.position = _startPos;
         _dice.transform.rotation = _startRot;
+    }
+
+    public void DrawLine()
+    {
+         _path = CalculatePath();
+        float scaleY;
+        Debug.Log(_path.Count);
+        for(int index = 0; index < _path.Count-1; index++)
+        {
+            scaleY = _path[index].transform.lossyScale.y;
+            Debug.DrawLine(_path[index].transform.position + Vector3.up * scaleY / 2, _path[index + 1].transform.position, Color.green, 5f);
+        }
+        StartCoroutine(Move(_path));
+    }
+
+    IEnumerator Move(List<GameboardTile> path)
+    {
+        for (int i = 0; i < path.Count; i++)
+        {
+            Vector3 pathTilePos = path[i].transform.position;
+            Vector3 nextFigurPosition = new Vector3(pathTilePos.x, _activeFigure.transform.position.y, pathTilePos.z);
+            _elapsedTime = Time.deltaTime;
+            while(_activeFigure.transform.position != nextFigurPosition)
+            {
+                _elapsedTime += Time.deltaTime;
+                float percentageComplete = _elapsedTime / _desiredDuration;
+                yield return _activeFigure.transform.position = Vector3.Lerp(_activeFigure.transform.position, nextFigurPosition, percentageComplete);
+            }
+        }
+        
+    }
+
+    private List<GameboardTile> CalculatePath()
+    {
+        GameboardTile startTile = _activeFigure.transform.parent.GetComponent<GameboardTile>();
+        GameboardTile endTile = _endTile.GetComponent<GameboardTile>();
+
+        openList = new List<GameboardTile> { startTile };
+        closedList = new List<GameboardTile>();
+
+        GameboardTile[,] grid = _board.GetComponent<Gameboard>().GetTileArray();
+
+        for (int x = 0; x < _RasterSize; x++)
+        {
+            for (int y = 0; y < _RasterSize; y++)
+            {
+                GameboardTile tileClass = grid[x, y];
+                tileClass.gCost = int.MaxValue;
+                tileClass.CalculateFCost();
+                tileClass.previousTile = null;
+            }
+        }
+
+        startTile.gCost = 0;
+        startTile.hCost = CalculateDistanceCost(startTile, endTile);
+        startTile.CalculateFCost();
+
+        while (openList.Count > 0)
+        {
+            GameboardTile currentTile = GetLowestFCostTile(openList);
+            if (currentTile == endTile)
+                return CalculatePath(endTile);
+
+            openList.Remove(currentTile);
+            closedList.Add(currentTile);
+
+            foreach (GameboardTile neighbourTile in GetNeighboursList(currentTile, grid))
+            {
+                if (closedList.Contains(neighbourTile)) continue;
+
+                int tentativeGCost = currentTile.gCost + CalculateDistanceCost(currentTile, neighbourTile);
+                if (tentativeGCost < neighbourTile.gCost)
+                {
+                    neighbourTile.previousTile = currentTile;
+                    neighbourTile.gCost = tentativeGCost;
+                    neighbourTile.hCost = CalculateDistanceCost(neighbourTile, endTile);
+                    neighbourTile.CalculateFCost();
+
+                    if (!openList.Contains(neighbourTile))
+                        openList.Add(neighbourTile);
+                }
+            }
+        }
+
+        return null;
+
+        /*int indexDirX = Mathf.RoundToInt(Mathf.Sign(direction.x));
+        List<GameboardTile> path = new List<GameboardTile>();
+        for (int i = 0; path.Last() != endTile; i += indexDirX)
+        {
+            list
+                tileClass.gCost = int.MaxValue;
+        }
+
+        if (direction.x > zero)*/
+    }
+
+    private List<GameboardTile> GetNeighboursList(GameboardTile currentTile, GameboardTile[,] grid)
+    {
+        List<GameboardTile> neighbourList = new List<GameboardTile>();
+        currentTile.GetIndex(out int x, out int y);
+
+        // Check all left neighbours
+        if (x - 1 >= 0)
+        {
+            neighbourList.Add(grid[x - 1, y]);
+
+            if (y - 1 >= 0)
+                neighbourList.Add(grid[x - 1, y - 1]);
+            if (y + 1 <= _RasterSize-1)
+                neighbourList.Add(grid[x - 1, y + 1]);
+        }
+
+        // Check all left neighbours
+        if (x + 1 <= _RasterSize-1)
+        {
+            neighbourList.Add(grid[x + 1, y]);
+
+            if (y - 1 >= 0)
+                neighbourList.Add(grid[x + 1, y - 1]);
+            if (y + 1 <= _RasterSize-1)
+                neighbourList.Add(grid[x + 1, y + 1]);
+        }
+
+        // Check down neighbour
+        if (y - 1 >= 0)
+            neighbourList.Add(grid[x, y - 1]);
+
+        // Check top neighbour
+        if (y + 1 <= _RasterSize-1)
+            neighbourList.Add(grid[x, y + 1]);
+
+        return neighbourList;
+    }
+
+    private List<GameboardTile> CalculatePath(GameboardTile endTile)
+    {
+        List<GameboardTile> path = new List<GameboardTile>();
+        path.Add(endTile);
+        GameboardTile currentTile = endTile;
+        while (currentTile.previousTile != null)
+        {
+            path.Add(currentTile.previousTile);
+            currentTile = currentTile.previousTile;
+        }
+        path.Reverse();
+
+        return path;
+    }
+
+    private int CalculateDistanceCost(GameboardTile startTile, GameboardTile endTile)
+    {
+        endTile.GetIndex(out int endX, out int endY);
+        startTile.GetIndex(out int startX, out int startY);
+        int deltaX = Mathf.Abs(endX - startX);
+        int deltaY = Mathf.Abs(endY - startY);
+        int distance = Mathf.Abs(deltaX - deltaY);
+        return MOVE_DIAGONAL_COST * Mathf.Min(deltaX, deltaY) + MOVE_STRAIGHT_COST * distance;
+    }
+
+    private GameboardTile GetLowestFCostTile(List<GameboardTile> tileClassList)
+    {
+        GameboardTile lowestFCostTIle = tileClassList[0];
+        foreach (GameboardTile tileClass in tileClassList)
+            if (tileClass.fCost < lowestFCostTIle.fCost)
+                lowestFCostTIle = tileClass;
+
+        return lowestFCostTIle;
     }
 }

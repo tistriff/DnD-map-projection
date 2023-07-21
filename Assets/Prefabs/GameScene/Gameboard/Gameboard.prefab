@@ -12,8 +12,8 @@ GameObject:
   - component: {fileID: 3998284323656353394}
   - component: {fileID: 8608564902179866750}
   - component: {fileID: 6355104813485763562}
-  - component: {fileID: 111003765430923345}
   - component: {fileID: 5461477488406742699}
+  - component: {fileID: 5331054314139847735}
   m_Layer: 0
   m_Name: Gameboard
   m_TagString: Untagged
@@ -108,18 +108,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &111003765430923345
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 642543026644724965}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 400233c3611329d4c869297278a48dee, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &5461477488406742699
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -139,6 +127,18 @@ MonoBehaviour:
   SceneMigrationSynchronization: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
+--- !u!114 &5331054314139847735
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 642543026644724965}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d2e6b1cf7ce5f84f83aa35bb0187448, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1494996654893605249
 GameObject:
   m_ObjectHideFlags: 0

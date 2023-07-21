@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
@@ -65,7 +63,7 @@ public class ARInputHandler : MonoBehaviour
 
     private void FingerDown(EnhancedTouch.Finger finger)
     {
-        if (finger.index != 0) return;
+        if (finger.index != 0 || Vector2Extensions.IsPointOverUIObject(finger.screenPosition)) return;
 
         if (aRPlaneManager.isActiveAndEnabled && aRRaycastManager.Raycast(finger.currentTouch.screenPosition, hits, TrackableType.PlaneWithinPolygon))
         {
