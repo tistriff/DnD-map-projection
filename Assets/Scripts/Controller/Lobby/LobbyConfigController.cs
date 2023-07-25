@@ -101,13 +101,13 @@ public class LobbyConfigController : MonoBehaviour
         }
     }
 
-    public void OpenImageSelection(TMP_Text text, Button btn)
+    public void OpenImageSelection(TMP_Text text, Button rasterBtn)
     {
         _selectedImageText = text;
-        _rasterWindowButton = btn;
+        _rasterWindowButton = rasterBtn;
         _imageSelectionMenu.SetActive(true);
 
-        Transform root = _imageSelectionMenu.transform.GetChild(0).GetChild(0).GetChild(0);
+        Transform root = _imageSelectionMenu.transform.Find("ImagelistScrollable").GetChild(0).GetChild(0);
 
         if (root.childCount != 0)
             return;
@@ -115,9 +115,12 @@ public class LobbyConfigController : MonoBehaviour
         for(int i = 0; i<_maps.Count; i++)
         {
             GameObject element = Instantiate(_prefabImageSelection, root);
-            element.transform.GetChild(0).GetComponent<TMP_Text>().text = _maps[i].name;
+            Transform childImage = element.transform.GetChild(0);
+            Texture2D tex = _maps[i];
+            Sprite sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+            element.transform.GetChild(0).GetComponent<Image>().sprite = sprite;
             int index = i;
-            element.GetComponent<Button>().onClick.AddListener(() =>
+            element.transform.GetComponent<Button>().onClick.AddListener(() =>
             {
                 SelectImage(index);
             });

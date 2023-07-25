@@ -169,6 +169,8 @@ public class PlacementController : NetworkBehaviour
                         SelectSelectableServerRpc(0, _objectColor, xForTileSelection, yForTileSelection);
                         break;
                     case TAG_FIGURE:
+                        if (root.GetComponent<FigureInfo>().GetMoving())
+                            return;
                         GameObject tile = root.transform.parent.gameObject;
                         tile.GetComponent<GameboardTile>().GetIndex(out int xForFigureSelection, out int yForFigureSelection);
                         SelectSelectableServerRpc(1, _objectColor, xForFigureSelection, yForFigureSelection);
@@ -305,18 +307,18 @@ public class PlacementController : NetworkBehaviour
         Vector3 selectionPos = selectable.transform.position;
         if (selectionCircle == null)
         {
-            selectionCircle = Instantiate(selectionPrefab, selectionPos, selectable.transform.rotation);
+            selectionCircle = Instantiate(selectionPrefab, selectionPos, _localGameboard.transform.rotation);
             selectionCircle.transform.localScale = new Vector3(
                 _localGameboard.transform.lossyScale.x / _raster * 0.5f,
                 _localGameboard.transform.lossyScale.x / _raster * 0.25f,
                 _localGameboard.transform.lossyScale.z / _raster * 0.5f);
+            _selections.Add(selectionCircle.gameObject);
         }
 
         float newYPos = selectionPos.y + selectable.transform.lossyScale.y / 2 + selectionCircle.transform.lossyScale.y / 2;
         selectionCircle.transform.position = new Vector3(selectionPos.x, newYPos, selectionPos.z);
 
         selectionCircle.GetComponent<Renderer>().material.color = color;
-        _selections.Add(selectionCircle.gameObject);
     }
 
     private void ResetPlacementInfo()
@@ -359,6 +361,7 @@ public class PlacementController : NetworkBehaviour
         GameboardTile endTileClass = GetTile(xEnd, yEnd);
         GameObject endTileObject = endTileClass.gameObject;
 
+        figure.GetComponent<FigureInfo>().SetMoving(true);
         List<GameboardTile> path = CalculatePath(figure, endTileObject);
         figure.transform.parent.GetComponent<GameboardTile>().SetFigure(null);
         endTileObject.GetComponent<GameboardTile>().SetFigure(figure);
@@ -380,6 +383,8 @@ public class PlacementController : NetworkBehaviour
             }
             figure.transform.parent = path[i].transform;
         }
+
+        figure.GetComponent<FigureInfo>().SetMoving(false);
         _movement = Movement.STOPPED;
         _movementBtn.GetComponent<Image>().color = Color.black;
     }
@@ -533,6 +538,7 @@ public class PlacementController : NetworkBehaviour
 
         GameObject dicePrefab = _prefabDice.Find(dicePrefab => dicePrefab.GetComponent<Dice>().GetMax() == maxValue);
         dicePrefab.GetComponent<Rigidbody>().useGravity = false;
+        Debug.Log("Prefab gotten");
 
         Vector3 startPos = _localGameboard.transform.Find(DICE_BOX_NAME).GetChild(startIndex).position;
         Vector3 direction = _localGameboard.transform.position - startPos;
@@ -540,6 +546,7 @@ public class PlacementController : NetworkBehaviour
 
         GameObject diceObject = _dice.Find((dice) => dice.GetComponent<Renderer>().material.color == color
         && dice.GetComponent<Dice>().GetMax() == dicePrefab.GetComponent<Dice>().GetMax());
+        Debug.Log("Dice found");
         if (diceObject != null)
         {
             diceObject.transform.position = startPos;
@@ -552,31 +559,13 @@ public class PlacementController : NetworkBehaviour
             Vector2 tileSizeVal = new Vector2(lossyScale.x / _raster, lossyScale.z / _raster);
             diceObject.transform.localScale = new Vector3(tileSizeVal.x / 2, tileSizeVal.x / 2, tileSizeVal.y / 2);
             diceObject.GetComponent<Renderer>().material.color = color;
+            _dice.Add(diceObject);
         }
 
         Rigidbody body = diceObject.GetComponent<Rigidbody>();
         body.useGravity = true;
         body.velocity = direction * 2;
         body.angularVelocity = direction * 0.5f;
-
-        _dice.Add(diceObject);
-    }
-
-    public void ProcessDiceClear()
-    {
-        Color playerColor = GetCurrentPlayerColor();
-
-        ClearDiceFromPlayerServerRpc(playerColor);
-    }
-
-    [ServerRpc]
-    private void ClearDiceFromPlayerServerRpc(Color color)
-    {
-        List<GameObject> diceObjects = _dice.FindAll((dice) => dice.GetComponent<Renderer>().material.color == color);
-        _dice.RemoveAll((dice) => dice.GetComponent<Renderer>().material.color == color);
-
-        foreach (GameObject dice in diceObjects)
-            Destroy(dice);
     }
 
     //-------------
@@ -612,8 +601,26 @@ public class PlacementController : NetworkBehaviour
     {
         GameObject diceObject = _dice.Find(dice => dice.GetComponent<Renderer>().material.color == color
                                             && dice.GetComponent<Dice>().GetMax() == maxValue);
+
         _dice.Remove(diceObject);
         Destroy(diceObject);
+    }
+
+    public void ProcessDiceClear()
+    {
+        Color playerColor = GetCurrentPlayerColor();
+
+        ClearDiceFromPlayerServerRpc(playerColor);
+    }
+
+    [ServerRpc]
+    private void ClearDiceFromPlayerServerRpc(Color color)
+    {
+        List<GameObject> diceObjects = _dice.FindAll((dice) => dice.GetComponent<Renderer>().material.color == color);
+        _dice.RemoveAll((dice) => dice.GetComponent<Renderer>().material.color == color);
+
+        foreach (GameObject dice in diceObjects)
+            Destroy(dice);
     }
 
     //-------------

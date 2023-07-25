@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class FigureInfo : MonoBehaviour
 {
-    public string _modelName;
+    private string _modelName;
+    private bool _isMoving;
 
     public void SetName(string name)
     {
@@ -14,5 +15,15 @@ public class FigureInfo : MonoBehaviour
     public string GetName()
     {
         return _modelName;
+    }
+
+    public void SetMoving(bool state)
+    {
+        _isMoving = state;
+    }
+
+    public bool GetMoving()
+    {
+        return _isMoving;
     }
 }

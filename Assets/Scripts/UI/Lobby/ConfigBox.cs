@@ -20,13 +20,14 @@ public class ConfigBox: MonoBehaviour
         foreach(Transform child in parent)
         {
             Transform btnElem = child.GetChild(0);
-            Image img = btnElem.GetComponent<Image>();
-            img.sprite = sprites[spriteIndex];
-            spriteIndex++;
+            btnElem.GetComponent<Image>().sprite = sprites[spriteIndex];
+            int index = spriteIndex;
             btnElem.GetComponent<Button>().onClick.AddListener(() =>
             {
-                _mainFunctionController.UpdatePlayer(img.mainTexture.name);
+                _mainFunctionController.UpdatePlayer(index + "");
             });
+
+            spriteIndex++;
         }
 
         parent = element.transform.GetChild(1).Find("ColorBtnSelection");
@@ -51,6 +52,7 @@ public class ConfigBox: MonoBehaviour
         Transform transElement = Instantiate(_prefabDM, this.transform).transform;
         Button imgBtn = transElement.Find("ImageSelect").GetComponent<Button>();
         Button rastBtn = transElement.Find("RasterSelect").GetComponent<Button>();
+        Button saveBtn = transElement.Find("Speichern").GetComponent<Button>();
         imgBtn.onClick.AddListener(() =>
         {
             _configController.OpenImageSelection(transElement.Find("SelectedImage").GetComponent<TMP_Text>(), rastBtn);
@@ -60,6 +62,14 @@ public class ConfigBox: MonoBehaviour
         rastBtn.onClick.AddListener(() =>
         {
             _configController.OpenRasterMenu();
+            saveBtn.interactable = true;
+        });
+
+        saveBtn.onClick.AddListener(() =>
+        {
+            saveBtn.interactable = false;
+            _configController.UpdateLobbyConfig();
+            saveBtn.interactable = true;
         });
 
     }

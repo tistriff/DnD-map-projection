@@ -8,6 +8,7 @@ using Unity.Services.Lobbies.Models;
 using System;
 using System.Linq;
 using UnityEngine.UI;
+using System.Threading.Tasks;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -129,7 +130,7 @@ public class LobbyManager : MonoBehaviour
                     && GetCurrentPlayer().Data[KEY_PLAYER_READY].Value == "True") // did the player already pressed ready?
                 {
                     // Join relay connection as Client
-                    Debug.Log("joined");
+                    Debug.Log(_gameStartedCode);
                     Relay.Instance.JoinRelay(_gameStartedCode);
                 }
             }
@@ -143,7 +144,7 @@ public class LobbyManager : MonoBehaviour
 
     // Configures and creates the lobby and the Host Player to let him join automatically
     // Sets up the created lobby as the current lobby so the lobby controller can use the information to display them dynamically
-    public async void CreateLobby()
+    public async Task<bool> CreateLobby()
     {
         try
         {
@@ -172,23 +173,25 @@ public class LobbyManager : MonoBehaviour
             {
                 StartCoroutine(HeartbeatLoop());
                 StartCoroutine(LobbyUpdateLoop());
-                ScenesManager.Instance.LoadLobby();
             }
             else
             {
                 Debug.LogError("Lobby konnte nicht erstellt werden!");
+                return false;
             }
         }
         catch (LobbyServiceException e)
         {
             Debug.LogException(e, this);
+            return false;
         }
 
         ScenesManager.Instance.LoadLobby();
+        return true;
     }
 
     // Function to join a specific Lobby with the Lobbycode as a Client
-    public async void JoinLobbyByCode(string lobbyCode, string playerName, Action<string> errorFunction)
+    public async Task<bool> JoinLobbyByCode(string lobbyCode, string playerName)
     {
         try
         {
@@ -201,22 +204,24 @@ public class LobbyManager : MonoBehaviour
             {
                 StartCoroutine(LobbyUpdateLoop());
                 ScenesManager.Instance.LoadLobby();
+                return true;
             }
             else
             {
-                errorFunction("Keine Lobby gefunden!");
+                Debug.LogError("Keine Lobby gefunden!");
+                return false;
             }
 
         }
         catch (LobbyServiceException e)
         {
-            errorFunction("Keine Lobby gefunden!");
             Debug.LogException(e, this);
+            return false;
         }
     }
 
     // Function to quickjoin the first suitable public Lobby without a Lobbycode as a Client
-    public async void QuickJoinLobby(Action<string> errorFunction)
+    public async Task<bool> QuickJoinLobby()
     {
 
         try
@@ -233,13 +238,15 @@ public class LobbyManager : MonoBehaviour
             }
             else
             {
-                errorFunction("Keine Lobby gefunden!");
+                Debug.LogError("Keine Lobby gefunden!");
+                return false;
             }
-
+            return true;
         }
         catch (LobbyServiceException e)
         {
             Debug.LogException(e, this);
+            return false;
         }
     }
 
@@ -390,6 +397,11 @@ public class LobbyManager : MonoBehaviour
         return _currentLobby.Players;
     }
 
+    public int GetPlayerLimit()
+    {
+        return _playerLimit;
+    }
+
     public Player GetCurrentPlayer()
     {
         return _currentLobby.Players.Find((player) => player.Id == AuthenticationService.Instance.PlayerId);
@@ -413,10 +425,14 @@ public class LobbyManager : MonoBehaviour
         return _mapTextures[int.Parse(_currentLobby.Data[KEY_IMAGE].Value)];
     }
 
-    public bool IsDM()
+    public bool IsDM(string id = null)
     {
         if (_currentLobby != null)
-            return AuthenticationService.Instance.PlayerId == _currentLobby.HostId;
+        {
+            if (id == null)
+                id = AuthenticationService.Instance.PlayerId;
+            return id.Equals(_currentLobby.HostId);
+        }
         return false;
     }
 
