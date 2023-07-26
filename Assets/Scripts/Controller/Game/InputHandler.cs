@@ -1,15 +1,17 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem.EnhancedTouch;
+using UnityEngine.InputSystem.Utilities;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 using EnhancedTouch = UnityEngine.InputSystem.EnhancedTouch;
 
 [RequireComponent(typeof(ARRaycastManager), typeof(ARPlaneManager))]
-public class ARInputHandler : MonoBehaviour
+public class InputHandler : MonoBehaviour
 {
     [SerializeField] private PlacementController _placementController;
-    public event OnVariableChangeDelegate OnVariableChange;
-    public delegate void OnVariableChangeDelegate(RaycastHit newVal);
+    public event OnSelectionChangeDelegate OnSelectionChange;
+    public delegate void OnSelectionChangeDelegate(RaycastHit newVal);
 
     private RaycastHit _selectedObject;
     public RaycastHit SelectedObjectProperty
@@ -23,8 +25,27 @@ public class ARInputHandler : MonoBehaviour
         {
             if (_selectedObject.Equals(value)) return;
             _selectedObject = value;
-            if (OnVariableChange != null)
-                OnVariableChange(_selectedObject);
+            if (OnSelectionChange != null)
+                OnSelectionChange(_selectedObject);
+        }
+    }
+
+    public event OnScreenPositionChangeDelegate OnPositionChange;
+    public delegate void OnScreenPositionChangeDelegate(Vector2 position);
+    private Vector2 _touchPosition;
+    public Vector2 TouchPositionProperty
+    {
+        get
+        {
+            return _touchPosition;
+        }
+
+        set
+        {
+            if (_touchPosition == value) return;
+            _touchPosition = value;
+            if (OnPositionChange != null)
+                OnPositionChange(_touchPosition);
         }
     }
 
@@ -61,11 +82,13 @@ public class ARInputHandler : MonoBehaviour
         EnhancedTouch.Touch.onFingerMove -= FingerMove;
     }
 
-    private void FingerDown(EnhancedTouch.Finger finger)
+    private void FingerDown(Finger finger)
     {
+        TouchPositionProperty = finger.currentTouch.screenPosition;
         if (finger.index != 0 || Vector2Extensions.IsPointOverUIObject(finger.screenPosition)) return;
 
-        if (aRPlaneManager.isActiveAndEnabled && aRRaycastManager.Raycast(finger.currentTouch.screenPosition, hits, TrackableType.PlaneWithinPolygon))
+        if (aRPlaneManager.isActiveAndEnabled
+            && aRRaycastManager.Raycast(finger.currentTouch.screenPosition, hits, TrackableType.PlaneWithinPolygon))
         {
             _placementController.SelectGameboardPlacement(hits[0]);
             TogglePlaneDetection(false);
@@ -82,20 +105,24 @@ public class ARInputHandler : MonoBehaviour
 
     }
 
-    private void FingerMove(EnhancedTouch.Finger finger)
+    private void FingerMove(Finger finger)
     {
         if (finger.index < 1)
-            return;
-
-        Vector2 fingerVector = finger.lastTouch.screenPosition - finger.currentTouch.screenPosition;
-        Debug.Log("Magnitude des Fingervectors: " + fingerVector.magnitude);
-        if (_prevMagnitude == 0)
         {
-            _prevMagnitude = fingerVector.magnitude;
+            _prevMagnitude = 0;
+            return;
         }
-        float difference = fingerVector.magnitude - _prevMagnitude;
-        Debug.Log(difference);
+
+        ReadOnlyArray<Finger> fingers = EnhancedTouch.Touch.activeFingers;
+        if (fingers.Count < 2)
+            return;
+        float distance = Vector2.Distance(fingers[0].screenPosition, fingers[1].screenPosition);
+        if (_prevMagnitude == 0)
+            _prevMagnitude = distance;
+
+        float difference = distance - _prevMagnitude;
         _placementController.ScaleBoard(difference);
+        _prevMagnitude = distance;
     }
 
     private void selectObject(RaycastHit hitObject)

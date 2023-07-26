@@ -18,6 +18,7 @@ public class ReadyToggle : MonoBehaviour
 
     public void Toggle()
     {
+        GetComponent<Button>().interactable = false;
         GameObject myEventSystem = GameObject.Find("EventSystem");
         myEventSystem.GetComponent<UnityEngine.EventSystems.EventSystem>().SetSelectedGameObject(null);
         ColorBlock colors = GetComponent<Button>().colors;
@@ -35,6 +36,7 @@ public class ReadyToggle : MonoBehaviour
         }
         GetComponent<Button>().colors = colors;
         transform.GetComponentInChildren<TMP_Text>().text = btnText;
+        GetComponent<Button>().interactable = false;
     }
 
     public bool GetReadyState()

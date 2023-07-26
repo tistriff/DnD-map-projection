@@ -21,7 +21,7 @@ public class ScaleContentBox : MonoBehaviour
         scrollAction.Enable();
         scrollAction.performed += context => ScaleImage(context.ReadValue<Vector2>().y);
 
-        var touch0pos = new InputAction(
+        /*var touch0pos = new InputAction(
             type: InputActionType.Value,
             binding: "<Touchscreen>/touch0/position"
             );
@@ -37,7 +37,7 @@ public class ScaleContentBox : MonoBehaviour
             var magnitude = (touch0pos.ReadValue<Vector2>() - touch0pos.ReadValue<Vector2>()).magnitude;
             if (_prevMagnitude == 0)
                 _prevMagnitude = magnitude;
-        };
+        };*/
     }
 
     void Awake()
@@ -47,21 +47,22 @@ public class ScaleContentBox : MonoBehaviour
 
     private void OnEnable()
     {
-        //EnhancedTouch.TouchSimulation.Enable();
-        //EnhancedTouch.EnhancedTouchSupport.Enable();
-        //EnhancedTouch.Touch.onFingerMove += FingerTouch;
+        /*EnhancedTouch.TouchSimulation.Enable();
+        EnhancedTouch.EnhancedTouchSupport.Enable();
+        EnhancedTouch.Touch.onFingerMove += FingerMove;*/
     }
 
     private void OnDisable()
     {
         /*EnhancedTouch.TouchSimulation.Disable();
         EnhancedTouch.EnhancedTouchSupport.Disable();
-        EnhancedTouch.Touch.onFingerMove -= FingerTouch;*/
+        EnhancedTouch.Touch.onFingerMove -= FingerMove;*/
 
         new InputAction(binding: "<Mouse>/scroll").performed -= context => ScaleImage(context.ReadValue<Vector2>().y);
+        MagReset();
     }
 
-    private void FingerTouch(Finger finger)
+    private void FingerMove(Finger finger)
     {
         if (finger.index < 1)
         {

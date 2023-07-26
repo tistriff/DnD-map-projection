@@ -53,6 +53,7 @@ public class DetailViewHandler : MonoBehaviour
         tileInfoPanel.transform.Find(NAME_DESTROY).GetComponent<Button>().onClick.AddListener(() =>
         {
             controller.ClearTerrainClientRpc(xIndex, yIndex);
+            CreateTileView(tile, controller);
         });
     }
 
@@ -73,6 +74,8 @@ public class DetailViewHandler : MonoBehaviour
             } 
             else
                 controller.RemoveDiceClientRpc(artifact.GetComponent<Dice>().GetMax(), artifact.GetComponent<Renderer>().material.color);
+
+            Destroy(artifactInfoPanel);
         });
     }
 }

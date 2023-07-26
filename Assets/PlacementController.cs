@@ -30,13 +30,13 @@ public class PlacementController : NetworkBehaviour
     private const int MOVE_DIAGONAL_COST = 14;
     private List<GameboardTile> openList;
     private List<GameboardTile> closedList;
-    public float _desiredDuration = 3f;
-    public float _elapsedTime;
+    private float _desiredDuration = 3f;
+    private float _elapsedTime;
 
     private const string SHADER_TEXTURE_NAME = "_MainTex";
     private const string DICE_BOX_NAME = "Walls";
 
-    [SerializeField] private ARInputHandler _aRInputHandler;
+    [SerializeField] private InputHandler _inputHandler;
     [SerializeField] private GameObject _prefabGameboard;
     [SerializeField] private GameObject _prefabTile;
     [SerializeField] private GameObject _prefabTerrain;
@@ -60,7 +60,7 @@ public class PlacementController : NetworkBehaviour
 
     private void Start()
     {
-        _aRInputHandler.OnVariableChange += SelectArtifactPlacement;
+        _inputHandler.OnSelectionChange += SelectArtifactPlacement;
         _localGameboard = null;
         _raster = int.Parse(LobbyManager.Instance.GetCurrentLobby().Data[LobbyManager.KEY_RASTER].Value);
         if (_raster == 0)
@@ -204,8 +204,15 @@ public class PlacementController : NetworkBehaviour
                 break;
         }
 
-        if (IsHost && _removeMenu.activeSelf)
+        if (IsHost)
+        {
             _detailViewHandler.CreateView(root, this, rootCategory);
+            if (!_removeMenu.activeSelf)
+            {
+                _removeMenu.SetActive(true);
+                _removeMenu.SetActive(false);
+            }
+        }
 
         _lastSelected = root;
         Debug.Log(root.name + " setted as root");
@@ -218,7 +225,7 @@ public class PlacementController : NetworkBehaviour
         Debug.Log(color);
         GameboardTile tileClass = GetTile(x, y);
         GameObject tile = tileClass.gameObject;
-        List < GameObject> terrainList = tileClass.GetTerrainList();
+        List<GameObject> terrainList = tileClass.GetTerrainList();
 
         if (terrainList.Count >= (TERRAIN_LIMIT * TERRAIN_LIMIT)
             || terrainList.Find(terrainHolder => terrainHolder.transform.GetChild(0).GetComponent<Renderer>().material.color == color) != null)
@@ -282,7 +289,7 @@ public class PlacementController : NetworkBehaviour
 
         tileClass.SetFigure(figure.gameObject);
     }
-    
+
     [ServerRpc]
     private void SelectSelectableServerRpc(int rootCategory, Color color, int x, int y)
     {
@@ -680,7 +687,7 @@ public class PlacementController : NetworkBehaviour
         gameObject.GetComponent<Button>().interactable = false;
         _spawnInfoHolder = gameObject.GetComponent<ObjectHolder>().GetSpawnObject();
 
-        if (_spawnInfoHolder.tag.Equals(TAG_TERRAIN))
+        if (!_spawnInfoHolder.tag.Equals(TAG_BOARD))
             _objectColor = gameObject.GetComponent<Image>().color;
 
         gameObject.GetComponent<Button>().interactable = true;

@@ -52,6 +52,7 @@ public class PlayerController : NetworkBehaviour
         }
 
         RestrictMenu(IsHost);
+        NetworkManager.Singleton.OnTransportFailure += OnFail();
     }
 
 
@@ -67,8 +68,8 @@ public class PlayerController : NetworkBehaviour
         ClearObjectList(list);
         foreach (Player player in _currentPlayerList)
         {
-            /*if (player.Id == LobbyManager.Instance.GetCurrentLobby().HostId)
-                continue;*/
+            if (player.Id == LobbyManager.Instance.GetCurrentLobby().HostId)
+                continue;
 
             GameObject element = Instantiate(_charakterPlatePrefab, list.transform);
             GameObject charModel = _charakterModelPrefabs[int.Parse(player.Data[LobbyManager.KEY_PLAYER_WEAPON].Value)];
@@ -113,6 +114,8 @@ public class PlayerController : NetworkBehaviour
 
     private void ClearObjectList(GameObject list)
     {
+        if (list == null || list.transform.childCount == 0)
+            return;
         foreach (Transform child in list.transform)
             Destroy(child.gameObject);
     }
@@ -141,7 +144,16 @@ public class PlayerController : NetworkBehaviour
 
     private void LeaveGame()
     {
+        LobbyManager.Instance.LeaveLobby();
         ScenesManager.Instance.Exit();
+    }
+
+    private Action OnFail()
+    {
+        if (NetworkManager.Singleton != null)
+            return null;
+
+        return LeaveGame;
     }
 
     public void AddNPC(TMP_Text textfield)

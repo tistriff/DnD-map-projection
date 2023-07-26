@@ -111,9 +111,13 @@ public class LobbyManager : MonoBehaviour
 
                 if (GetCurrentPlayer() == null) // IsPlayerInLobby() ?
                 {
-                    ResetLocalLobby();
+                    Debug.Log("No playerlist anymore");
+                    LeaveLobby();
                     return;
                 }
+
+                if (_connected)
+                    return;
 
                 // sets the code to join the relay connection for better usage
                 _gameStartedCode = _currentLobby.Data[KEY_START_GAME].Value;
@@ -130,8 +134,11 @@ public class LobbyManager : MonoBehaviour
                     && GetCurrentPlayer().Data[KEY_PLAYER_READY].Value == "True") // did the player already pressed ready?
                 {
                     // Join relay connection as Client
-                    Debug.Log(_gameStartedCode);
+                    Debug.Log("Connected: " + _connected);
+                    Debug.Log("Code: " + _gameStartedCode);
+                    Debug.Log("ReadyState: " + GetCurrentPlayer().Data[KEY_PLAYER_READY].Value);
                     Relay.Instance.JoinRelay(_gameStartedCode);
+                    _connected = true;
                 }
             }
         }
@@ -391,6 +398,7 @@ public class LobbyManager : MonoBehaviour
 
     public List<Player> GetPlayerList()
     {
+        Debug.Log("CurrentLobby: " + _currentLobby);
         if (_currentLobby == null)
             return null;
 
