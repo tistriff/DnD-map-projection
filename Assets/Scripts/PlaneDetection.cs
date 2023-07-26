@@ -8,7 +8,7 @@ using UnityEngine.XR.ARSubsystems;
 public class PlaneDetection : MonoBehaviour
 {
     [SerializeField]
-    GameObject spawn_prefab;
+    List<GameObject> spawn_prefab;
     
     private GameObject _spawned_object;
     private bool _object_spawned;
@@ -34,8 +34,9 @@ public class PlaneDetection : MonoBehaviour
                 var hitpose = hits[0].pose;
                 if (!_object_spawned)
                 {
-                    _spawned_object = Instantiate(spawn_prefab, hitpose.position, hitpose.rotation);
-                    _object_spawned = true;
+                    Debug.Log("Hit");
+                    //_spawned_object = Instantiate(spawn_prefab, hitpose.position, hitpose.rotation);
+                    //_object_spawned = true;
                 } else
                 {
                     _spawned_object.transform.position = hitpose.position;

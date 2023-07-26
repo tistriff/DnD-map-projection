@@ -12,15 +12,19 @@ using UnityEngine.UI;
 public class LobbyConfigController : MonoBehaviour
 {
     private Texture2D _tex;
-    private Image _img;
-    //private Material mat;
-
+    private List<Texture2D> _maps;
+    private int _selectedMapIndex;
     private TMP_Text _selectedImageText;
-    Button _rasterWindowButton;
+    private Button _rasterWindowButton;
+    private int _gridSize;
+
+
     [SerializeField] private Image _rasterImage;
     [SerializeField] private GameObject _rasterMenu;
+    [SerializeField] private GameObject _imageSelectionMenu;
+    [SerializeField] private GameObject _prefabImageSelection;
 
-    [SerializeField] private int _gridSize;
+
     [SerializeField] private TMP_Text _gridSizeText;
     [SerializeField] private GameObject _gridLayer;
     [SerializeField] private Button _plus;
@@ -51,6 +55,8 @@ public class LobbyConfigController : MonoBehaviour
         // Path: C:\Users
         // Icon: default (folder icon)
         FileBrowser.AddQuickLink("Users", "C:\\Users", null);
+
+        _maps = LobbyManager.Instance.GetMapList();
     }
 
 
@@ -95,6 +101,44 @@ public class LobbyConfigController : MonoBehaviour
         }
     }
 
+    public void OpenImageSelection(TMP_Text text, Button rasterBtn)
+    {
+        _selectedImageText = text;
+        _rasterWindowButton = rasterBtn;
+        _imageSelectionMenu.SetActive(true);
+
+        Transform root = _imageSelectionMenu.transform.Find("ImagelistScrollable").GetChild(0).GetChild(0);
+
+        if (root.childCount != 0)
+            return;
+
+        for(int i = 0; i<_maps.Count; i++)
+        {
+            GameObject element = Instantiate(_prefabImageSelection, root);
+            Transform childImage = element.transform.GetChild(0);
+            Texture2D tex = _maps[i];
+            Sprite sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+            element.transform.GetChild(0).GetComponent<Image>().sprite = sprite;
+            int index = i;
+            element.transform.GetComponent<Button>().onClick.AddListener(() =>
+            {
+                SelectImage(index);
+            });
+        }
+    }
+
+    public void SelectImage(int index)
+    {
+        _selectedMapIndex = index;
+
+        _tex = _maps[index];
+        _rasterImage.sprite = Sprite.Create(_tex, new Rect(0, 0, _tex.width, _tex.height), new Vector2(0.5f, 0.5f));
+        _rasterImage.SetNativeSize();
+
+        _selectedImageText.text = _maps[index].name;
+        _rasterWindowButton.interactable = true;
+    }
+
     public void OpenRasterMenu()
     {
         _rasterMenu.SetActive(true);
@@ -107,7 +151,7 @@ public class LobbyConfigController : MonoBehaviour
             return;
         _plus.interactable = false;
         _minus.interactable = false;
-        
+
         _gridSize--;
         PlaceRaster();
 
@@ -149,17 +193,16 @@ public class LobbyConfigController : MonoBehaviour
 
     public void UpdateLobbyConfig()
     {
-        byte[] bytes = ImageConversion.EncodeToJPG(_tex);
-        string imgString = Convert.ToBase64String(bytes);
-        LobbyManager.Instance.UpdateLobbyConfig(imgString, _gridSize.ToString());
+        LobbyManager.Instance.UpdateLobbyConfig(_selectedMapIndex.ToString(), _gridSize.ToString());
+
         _readyWarn.SetActive(false);
     }
 
     private void ClearRaster(Transform verticalLayer)
     {
-        foreach(Transform child in verticalLayer)
+        foreach (Transform child in verticalLayer)
         {
-            foreach(Transform subchild in child)
+            foreach (Transform subchild in child)
                 Destroy(subchild.gameObject);
             Destroy(child.gameObject);
         }

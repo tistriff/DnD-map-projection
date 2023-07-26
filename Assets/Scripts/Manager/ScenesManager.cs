@@ -1,31 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class ScenesManager : MonoBehaviour
+public class ScenesManager : NetworkBehaviour
 {
     public static ScenesManager Instance;
     //[SerializeField]
     //private List<Scene> scenes;
-
-    [SerializeField]
-    private Logger _logger;
-
-    public void Awake()
-    {
-        Instance = this;
-        if (!SceneManager.GetActiveScene().name.Equals(Scene.MainMenu.ToString()) && LobbyManager.Instance.GetCurrentLobby() == null)
-            Exit();
-            
-    }
-
-    private void Start()
-    {
-        string scene = SceneManager.GetActiveScene().name;
-        if(scene.Equals("Lobby") || scene.Equals("MainMenu"))
-            Screen.orientation = ScreenOrientation.Portrait;
-    }
 
     public enum Scene
     {
@@ -34,9 +17,22 @@ public class ScenesManager : MonoBehaviour
         GameScene
     }
 
-    public void LoadScene(Scene scene)
+    public void Awake()
     {
-        SceneManager.LoadScene(scene.ToString());
+        Instance = this;
+        if (!SceneManager.GetActiveScene().name.Equals(Scene.MainMenu.ToString())
+            && LobbyManager.Instance.GetCurrentLobby() == null)
+            Exit();
+
+    }
+
+    private void Start()
+    {
+        string scene = SceneManager.GetActiveScene().name;
+        if (scene.Equals("Lobby") || scene.Equals("MainMenu"))
+            Screen.orientation = ScreenOrientation.Portrait;
+        else
+            Screen.orientation = ScreenOrientation.LandscapeLeft;
     }
 
     public void Exit()
@@ -54,6 +50,12 @@ public class ScenesManager : MonoBehaviour
     public void LoadGame()
     {
         Screen.orientation = ScreenOrientation.LandscapeLeft;
-        SceneManager.LoadScene(Scene.GameScene.ToString());
+        string sceneName = Scene.GameScene.ToString();
+        var status = NetworkManager.SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+        if (status != SceneEventProgressStatus.Started)
+        {
+            Debug.LogWarning($"Failed to load {sceneName} " +
+                  $"with a {nameof(SceneEventProgressStatus)}: {status}");
+        }
     }
 }

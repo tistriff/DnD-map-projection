@@ -11,6 +11,12 @@ TagManager:
   - LobbyIDInput
   - ColorButton
   - WeaponButton
+  - ARPlane
+  - Tile
+  - Terrain
+  - SelectionCircle
+  - Figure
+  - Dice
   layers:
   - Default
   - TransparentFX
@@ -18,7 +24,7 @@ TagManager:
   - 
   - Water
   - UI
-  - 
+  - RaycastObject
   - 
   - 
   - 

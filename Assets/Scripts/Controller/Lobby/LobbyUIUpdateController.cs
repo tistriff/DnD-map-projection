@@ -6,24 +6,16 @@ using TMPro;
 using Unity.Services.Lobbies.Models;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.UI;
 
 public class LobbyUIUpdateController : MonoBehaviour
 {
 
     private float _lobbyUpdateTimer;
-    private float _lobbyUpdateTimerMax = 1.1f;
+    private float _lobbyUpdateTimerMax = 0.6f;
     private List<Player> _currentPlayerList;
     private bool _isDM;
-
-    [Serializable]
-    public struct PlayerElement
-    {
-        public string name;
-        public Sprite icon;
-        public Color color;
-        public string playerId;
-    }
 
     [SerializeField] private GameObject _playerElementTemplate;
     [SerializeField] private GameObject _configMenu;
@@ -31,6 +23,7 @@ public class LobbyUIUpdateController : MonoBehaviour
     [SerializeField] private List<Sprite> _iconsList;
     [SerializeField] private GameObject _readyWarn;
     [SerializeField] private Button _leaveBtn;
+    [SerializeField] private TMP_Text _playerLimit;
 
     //private LobbyConfigController _currentLobby;
 
@@ -68,28 +61,28 @@ public class LobbyUIUpdateController : MonoBehaviour
             _lobbyUpdateTimer = _lobbyUpdateTimerMax;
             List<Player> players = LobbyManager.Instance.GetPlayerList();
 
-            if(players == null)
+            if (players == null)
             {
                 ScenesManager.Instance.Exit();
                 return;
             }
 
-            if (!LobbyManager.Instance.GetGameStartedCode().Equals("") && LobbyManager.Instance.GetCurrentPlayer().Data[LobbyManager.KEY_PLAYER_READY].Value == "True")
-            {
-                ScenesManager.Instance.LoadGame();
-                return;
-            }  
-
             if (!CompareList(players))
-                createPlayerList(players);
+                updatePlayerList(players);
 
             if (!_leaveBtn.interactable)
                 _leaveBtn.interactable = true;
         }
     }
 
-    private void createPlayerList(List<Player> players)
+    private void UpdatePlayerLimit(List<Player> players)
     {
+        _playerLimit.text = "Spieleranzahl: " + players.Count + "/" + LobbyManager.Instance.GetPlayerLimit();
+    }
+
+    private void updatePlayerList(List<Player> players)
+    {
+        UpdatePlayerLimit(players);
         _currentPlayerList = new List<Player>();
 
         GameObject rootElement = GameObject.FindGameObjectWithTag("PlayerList");
@@ -98,44 +91,57 @@ public class LobbyUIUpdateController : MonoBehaviour
             Destroy(child.gameObject);
         }
 
-        GameObject element;
-
         foreach (Player player in players)
         {
-            element = Instantiate(_playerElementTemplate, rootElement.transform);
-            Transform namePlate = element.transform.GetChild(0);
-            if (player.Data[LobbyManager.KEY_PLAYER_READY].Value == "True")
-            {
-                namePlate.GetComponent<Image>().color = Color.green;
-            }
-            else
-            {
-                namePlate.GetComponent<Image>().color = Color.white;
-            }
-
-            namePlate.transform.Find("PlayerName").GetComponent<TMP_Text>().text = player.Data[LobbyManager.KEY_PLAYER_NAME].Value;
-            Button xBtn = namePlate.transform.Find("X").GetComponent<Button>();
-            if (_isDM && player.Id != LobbyManager.Instance.GetCurrentPlayer().Id)
-            {
-                xBtn.onClick.AddListener(() =>
-                {
-                    LobbyManager.Instance.KickPlayer(player);
-                });
-            }
-            else
-            {
-                Destroy(xBtn.gameObject);
-            }
-
-            Transform playerConfig = element.transform.GetChild(1);
-            playerConfig.transform.Find("Icon").GetComponent<Image>().sprite = _iconsList.Find((sprite) => sprite.name.Equals(player.Data[LobbyManager.KEY_PLAYER_WEAPON].Value));
-
-            if (ColorUtility.TryParseHtmlString(player.Data[LobbyManager.KEY_PLAYER_COLOR].Value, out Color newColor))
-                playerConfig.transform.Find("Color").GetComponent<Image>().color = newColor;
-
-            _currentPlayerList.Add(player);
-
+            CreatePlayerPlate(player, rootElement);
         }
+    }
+
+    private void CreatePlayerPlate(Player player, GameObject rootElement)
+    {
+        GameObject element = Instantiate(_playerElementTemplate, rootElement.transform);
+        Transform namePlate = element.transform.GetChild(0);
+        if (player.Data[LobbyManager.KEY_PLAYER_READY].Value == "True")
+        {
+            namePlate.GetComponent<Image>().color = Color.green;
+        }
+        else
+        {
+            namePlate.GetComponent<Image>().color = Color.white;
+        }
+
+        namePlate.transform.Find("PlayerName").GetComponent<TMP_Text>().text =
+            player.Data[LobbyManager.KEY_PLAYER_NAME].Value;
+        Button xBtn = namePlate.transform.Find("X").GetComponent<Button>();
+        if (_isDM && player.Id != LobbyManager.Instance.GetCurrentPlayer().Id)
+        {
+            xBtn.onClick.AddListener(() =>
+            {
+                LobbyManager.Instance.KickPlayer(player);
+            });
+        }
+        else
+        {
+            Destroy(xBtn.gameObject);
+        }
+
+
+        Transform playerConfig = element.transform.GetChild(1);
+
+        if (!LobbyManager.Instance.IsDM(player.Id))
+        {
+            playerConfig.transform.Find("Icon").GetComponent<Image>().sprite =
+                _iconsList[int.Parse(player.Data[LobbyManager.KEY_PLAYER_WEAPON].Value)];
+        } else
+        {
+            Destroy(playerConfig.transform.Find("Icon").gameObject);
+        }
+
+        if (ColorUtility.TryParseHtmlString(
+            player.Data[LobbyManager.KEY_PLAYER_COLOR].Value, out Color newColor))
+            playerConfig.transform.Find("Color").GetComponent<Image>().color = newColor;
+
+        _currentPlayerList.Add(player);
     }
 
     public void ActivateMenu()
@@ -145,7 +151,8 @@ public class LobbyUIUpdateController : MonoBehaviour
         {
             config.CreateDMConfig();
             _readyWarn.SetActive(true);
-        } else 
+        }
+        else
         {
             config.CreatePlayerConfig(_iconsList);
         }
@@ -157,10 +164,11 @@ public class LobbyUIUpdateController : MonoBehaviour
             return false;
 
         foreach (Player player in players)
-        { 
-            Player play = _currentPlayerList.Find((playerElem) => playerElem.Data.Where(entry => player.Data[entry.Key].Equals(entry.Value)).Count() != 0);
+        {
+            Player difference = _currentPlayerList.Find((playerElem) =>
+            playerElem.Data.Where(entry => player.Data[entry.Key].Value != (entry.Value.Value)).Count() != 0);
 
-            if (play == null)
+            if (difference != null)
                 return false;
         }
 

@@ -26,5 +26,6 @@ public class LobbyMainFunctionController : MonoBehaviour
     public void LeaveLobby()
     {
         LobbyManager.Instance.LeaveLobby();
+        ScenesManager.Instance.Exit();
     }
 }

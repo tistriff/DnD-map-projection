@@ -7,18 +7,21 @@ using UnityEngine;
 using Unity.Services.Lobbies.Models;
 using System;
 using System.Linq;
+using UnityEngine.UI;
+using System.Threading.Tasks;
 
 public class LobbyManager : MonoBehaviour
 {
     public static LobbyManager Instance;
 
-    public static string KEY_IMAGE = "Image";
-    public static string KEY_RASTER = "Raster";
-    public static string KEY_START_GAME = "RelayCode";
-    public static string KEY_PLAYER_NAME = "Name";
-    public static string KEY_PLAYER_COLOR = "Color";
-    public static string KEY_PLAYER_WEAPON = "Weapon";
-    public static string KEY_PLAYER_READY = "ReadyState"; 
+    public const string KEY_IMAGE = "Image";
+    public const string KEY_RASTER = "Raster";
+    public const string KEY_START_GAME = "RelayCode";
+    public const string KEY_PLAYER_NAME = "Name";
+    public const string KEY_PLAYER_COLOR = "Color";
+    public const string KEY_PLAYER_WEAPON = "Weapon";
+    public const string KEY_PLAYER_READY = "ReadyState";
+    public const string PLAYER_WEAPON_STD = "1";
 
     private Lobby _currentLobby = null;
     private float _heartbeatTimer = 0f;
@@ -28,6 +31,8 @@ public class LobbyManager : MonoBehaviour
     private int _playerLimit = 10;
     private string _gameStartedCode = "";
     private bool _connected = false;
+
+    [SerializeField] private List<Texture2D> _mapTextures;
 
     public enum Role
     {
@@ -113,7 +118,9 @@ public class LobbyManager : MonoBehaviour
                 // sets the code to join the relay connection for better usage
                 _gameStartedCode = _currentLobby.Data[KEY_START_GAME].Value;
 
-                if(IsDM() && _gameStartedCode.Equals("") && CheckReady())
+                if (IsDM()
+                   && _gameStartedCode.Equals("")
+                   && CheckReady())
                 {
                     StartGame();
                 }
@@ -123,6 +130,7 @@ public class LobbyManager : MonoBehaviour
                     && GetCurrentPlayer().Data[KEY_PLAYER_READY].Value == "True") // did the player already pressed ready?
                 {
                     // Join relay connection as Client
+                    Debug.Log(_gameStartedCode);
                     Relay.Instance.JoinRelay(_gameStartedCode);
                 }
             }
@@ -136,7 +144,7 @@ public class LobbyManager : MonoBehaviour
 
     // Configures and creates the lobby and the Host Player to let him join automatically
     // Sets up the created lobby as the current lobby so the lobby controller can use the information to display them dynamically
-    public async void CreateLobby(Action<string> errorFunction)
+    public async Task<bool> CreateLobby()
     {
         try
         {
@@ -165,23 +173,25 @@ public class LobbyManager : MonoBehaviour
             {
                 StartCoroutine(HeartbeatLoop());
                 StartCoroutine(LobbyUpdateLoop());
-                ScenesManager.Instance.LoadLobby();
             }
             else
             {
-                errorFunction("Lobby konnte nicht erstellt werden!");
+                Debug.LogError("Lobby konnte nicht erstellt werden!");
+                return false;
             }
         }
         catch (LobbyServiceException e)
         {
             Debug.LogException(e, this);
+            return false;
         }
 
         ScenesManager.Instance.LoadLobby();
+        return true;
     }
 
     // Function to join a specific Lobby with the Lobbycode as a Client
-    public async void JoinLobbyByCode(string lobbyCode, string playerName, Action<string> errorFunction)
+    public async Task<bool> JoinLobbyByCode(string lobbyCode, string playerName)
     {
         try
         {
@@ -194,22 +204,24 @@ public class LobbyManager : MonoBehaviour
             {
                 StartCoroutine(LobbyUpdateLoop());
                 ScenesManager.Instance.LoadLobby();
+                return true;
             }
             else
             {
-                errorFunction("Keine Lobby gefunden!");
+                Debug.LogError("Keine Lobby gefunden!");
+                return false;
             }
 
         }
         catch (LobbyServiceException e)
         {
-            errorFunction("Keine Lobby gefunden!");
             Debug.LogException(e, this);
+            return false;
         }
     }
 
     // Function to quickjoin the first suitable public Lobby without a Lobbycode as a Client
-    public async void QuickJoinLobby(Action<string> errorFunction)
+    public async Task<bool> QuickJoinLobby()
     {
 
         try
@@ -226,13 +238,15 @@ public class LobbyManager : MonoBehaviour
             }
             else
             {
-                errorFunction("Keine Lobby gefunden!");
+                Debug.LogError("Keine Lobby gefunden!");
+                return false;
             }
-
+            return true;
         }
         catch (LobbyServiceException e)
         {
             Debug.LogException(e, this);
+            return false;
         }
     }
 
@@ -251,17 +265,16 @@ public class LobbyManager : MonoBehaviour
             Data = new Dictionary<string, PlayerDataObject>
                 {
                     {KEY_PLAYER_NAME, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, playerName) },
-//                    {"Role", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, role.ToString()) },
-                    {KEY_PLAYER_WEAPON, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "sword") },
+                    {KEY_PLAYER_WEAPON, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, PLAYER_WEAPON_STD) },
                     {KEY_PLAYER_COLOR, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "#" + colorString) },
-                    {KEY_PLAYER_READY, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "False") }
+                    {KEY_PLAYER_READY, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, false.ToString()) }
                 }
         };
 
         return player;
     }
 
-    public async void UpdateLobbyConfig(string bytes, string raster)
+    public async void UpdateLobbyConfig(string index, string raster)
     {
         try
         {
@@ -269,7 +282,7 @@ public class LobbyManager : MonoBehaviour
             {
                 Data = new Dictionary<string, DataObject>
                 {
-                    {KEY_IMAGE, new DataObject(DataObject.VisibilityOptions.Member, bytes.Count().ToString())},
+                    {KEY_IMAGE, new DataObject(DataObject.VisibilityOptions.Member, index)},
                     {KEY_RASTER, new DataObject(DataObject.VisibilityOptions.Member, raster)},
                 }
             });
@@ -355,7 +368,7 @@ public class LobbyManager : MonoBehaviour
 
     private bool CheckReady()
     {
-        foreach(Player player in _currentLobby.Players)
+        foreach (Player player in _currentLobby.Players)
         {
             if (player.Data[KEY_PLAYER_READY].Value == "False")
                 return false;
@@ -368,6 +381,7 @@ public class LobbyManager : MonoBehaviour
         string relayCode = await Relay.Instance.CreateRelay(_currentLobby.MaxPlayers);
         _connected = true;
         UpdateLobbyGameState(relayCode);
+        ScenesManager.Instance.LoadGame();
     }
 
     public Lobby GetCurrentLobby()
@@ -383,6 +397,11 @@ public class LobbyManager : MonoBehaviour
         return _currentLobby.Players;
     }
 
+    public int GetPlayerLimit()
+    {
+        return _playerLimit;
+    }
+
     public Player GetCurrentPlayer()
     {
         return _currentLobby.Players.Find((player) => player.Id == AuthenticationService.Instance.PlayerId);
@@ -396,10 +415,24 @@ public class LobbyManager : MonoBehaviour
         return null;
     }
 
-    public bool IsDM()
+    public List<Texture2D> GetMapList()
     {
-        if(_currentLobby != null)
-            return AuthenticationService.Instance.PlayerId == _currentLobby.HostId;
+        return _mapTextures;
+    }
+
+    public Texture2D GetSelectedMap()
+    {
+        return _mapTextures[int.Parse(_currentLobby.Data[KEY_IMAGE].Value)];
+    }
+
+    public bool IsDM(string id = null)
+    {
+        if (_currentLobby != null)
+        {
+            if (id == null)
+                id = AuthenticationService.Instance.PlayerId;
+            return id.Equals(_currentLobby.HostId);
+        }
         return false;
     }
 
@@ -412,12 +445,9 @@ public class LobbyManager : MonoBehaviour
     {
         try
         {
-            Debug.Log("playerId");
             string playerId = AuthenticationService.Instance.PlayerId;
-            Debug.Log("currentLobby");
             if (IsDM() && _currentLobby != null)
             {
-                Debug.Log("Leave Lobby", this);
                 CloseLobby();
             }
             else if (_currentLobby != null)
