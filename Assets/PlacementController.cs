@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
@@ -150,15 +149,17 @@ public class PlacementController : NetworkBehaviour
                 if (!root.tag.Equals(TAG_TILE))
                     break;
                 root.GetComponent<GameboardTile>().GetIndex(out int xForTerrain, out int yForTerrain);
-                PlaceTerrainServerRpc(xForTerrain, yForTerrain, _objectColor);
+                PlaceTerrainClientRpcToServerRpc(xForTerrain, yForTerrain, _objectColor);
                 break;
             case TAG_FIGURE:
                 if (!root.tag.Equals(TAG_TILE))
                     break;
                 root.GetComponent<GameboardTile>().GetIndex(out int xForFigure, out int yForFigure);
                 string modelName = _spawnInfoHolder.name;
-                string playerName = _spawnInfoHolder.GetComponent<FigureInfo>().GetName();
-                PlaceFigureServerRpc(xForFigure, yForFigure, modelName, playerName, _objectColor);
+                string figureName = _spawnInfoHolder.GetComponent<FigureInfo>().GetName();
+                string id = _spawnInfoHolder.GetComponent<FigureInfo>().GetPlayerId();
+                bool isPlayer = _spawnInfoHolder.GetComponent<FigureInfo>().IsPlayer();
+                PlaceFigureClientRpcToServerRpc(xForFigure, yForFigure, modelName, figureName, _objectColor, id, isPlayer);
                 break;
             case TAG_SELECTION:
 
@@ -166,17 +167,17 @@ public class PlacementController : NetworkBehaviour
                 {
                     case TAG_TILE:
                         root.GetComponent<GameboardTile>().GetIndex(out int xForTileSelection, out int yForTileSelection);
-                        SelectSelectableServerRpc(0, _objectColor, xForTileSelection, yForTileSelection);
+                        SelectSelectableClientRpcToServerRpc(0, _objectColor, xForTileSelection, yForTileSelection, GetCurrentPlayerId());
                         break;
                     case TAG_FIGURE:
                         if (root.GetComponent<FigureInfo>().GetMoving())
                             return;
                         GameObject tile = root.transform.parent.gameObject;
                         tile.GetComponent<GameboardTile>().GetIndex(out int xForFigureSelection, out int yForFigureSelection);
-                        SelectSelectableServerRpc(1, _objectColor, xForFigureSelection, yForFigureSelection);
+                        SelectSelectableClientRpcToServerRpc(1, _objectColor, xForFigureSelection, yForFigureSelection, GetCurrentPlayerId());
                         break;
                     case TAG_DICE:
-                        SelectSelectableServerRpc(root.GetComponent<Renderer>().material.color, root.GetComponent<Dice>().GetMax(), _objectColor);
+                        SelectSelectableClientRpcToServerRpc(root.GetComponent<Dice>().GetPlayerId(), root.GetComponent<Dice>().GetMax(), _objectColor, GetCurrentPlayerId());
                         break;
 
                 }
@@ -215,12 +216,24 @@ public class PlacementController : NetworkBehaviour
         }
 
         _lastSelected = root;
-        Debug.Log(root.name + " setted as root");
+        if (_lastSelected.tag.Equals(TAG_FIGURE))
+            _movementBtn.GetComponent<Toggle>().interactable = true;
+        else
+            _movementBtn.GetComponent<Toggle>().interactable = false;
         ResetPlacementInfo();
     }
 
-    [ServerRpc]
-    private void PlaceTerrainServerRpc(int x, int y, Color color)
+
+
+    // Sending the function to the Server
+    // To Broadcast the Placement of the Terrain for all Clients
+    [ServerRpc(RequireOwnership = false)]
+    private void PlaceTerrainClientRpcToServerRpc(int x, int y, Color color)
+    {
+        PlaceTerrainClientRpc(x, y, color);
+    }
+    [ClientRpc]
+    private void PlaceTerrainClientRpc(int x, int y, Color color)
     {
         Debug.Log(color);
         GameboardTile tileClass = GetTile(x, y);
@@ -256,8 +269,17 @@ public class PlacementController : NetworkBehaviour
         tileClass.AddTerrainMarker(terrainHolder);
     }
 
-    [ServerRpc]
-    private void PlaceFigureServerRpc(int x, int y, string modelName, string playerName, Color color)
+
+
+    // Sending the function to the Server
+    // To Broadcast the Placement of the Figure for all Clients
+    [ServerRpc(RequireOwnership = false)]
+    private void PlaceFigureClientRpcToServerRpc(int x, int y, string modelName, string playerName, Color color, string id, bool isPlayer)
+    {
+        PlaceFigureClientRpc(x, y, modelName, playerName, color, id, isPlayer);
+    }
+    [ClientRpc]
+    private void PlaceFigureClientRpc(int x, int y, string modelName, string playerName, Color color, string id, bool isPlayer)
     {
 
         GameboardTile tileClass = GetTile(x, y);
@@ -266,7 +288,7 @@ public class PlacementController : NetworkBehaviour
         if (tileClass.GetFigure() != null)
             return;
 
-        GameObject figure = _figures.Find(figure => figure.GetComponent<FigureInfo>().GetName().Equals(playerName));
+        GameObject figure = _figures.Find(figure => figure.GetComponent<FigureInfo>().IsPlayer() == isPlayer && figure.GetComponent<FigureInfo>().GetPlayerId().Equals(id));
         if (figure != null)
         {
             figure.transform.parent.GetComponent<GameboardTile>().SetFigure(null);
@@ -277,12 +299,12 @@ public class PlacementController : NetworkBehaviour
             GameObject figurePrefab = _prefabFigure.Find(figure => figure.name.Equals(modelName));
             figure = Instantiate(figurePrefab, tile.transform);
             figure.GetComponent<FigureInfo>().SetName(playerName);
+            figure.GetComponent<FigureInfo>().SetPlayerId(id);
+            figure.GetComponent<FigureInfo>().SetIsPlayer(isPlayer);
             figure.transform.localScale = new Vector3(0.8f, 40f, 0.8f);
             figure.GetComponent<Renderer>().material.color = color;
             _figures.Add(figure);
         }
-
-
 
         float newYPos = 0.5f + figure.transform.localScale.y / 2;
         figure.transform.localPosition = new Vector3(0f, newYPos, 0f);
@@ -290,27 +312,44 @@ public class PlacementController : NetworkBehaviour
         tileClass.SetFigure(figure.gameObject);
     }
 
-    [ServerRpc]
-    private void SelectSelectableServerRpc(int rootCategory, Color color, int x, int y)
+
+
+    // Sending the function to the Server
+    // To Broadcast the Placement of the Selection for all Clients
+    [ServerRpc(RequireOwnership = false)]
+    private void SelectSelectableClientRpcToServerRpc(int rootCategory, Color color, int x, int y, string id)
+    {
+        SelectSelectableClientRpc(rootCategory, color, x, y, id);
+    }
+    [ClientRpc]
+    private void SelectSelectableClientRpc(int rootCategory, Color color, int x, int y, string id)
     {
         GameboardTile tileClass = GetTile(x, y);
         GameObject tile = tileClass.gameObject;
         if (rootCategory == 0)
-            PlaceSelection(tile, _prefabSelectionCircle, color);
+            PlaceSelection(tile, _prefabSelectionCircle, color, id);
         else
-            PlaceSelection(tileClass.GetFigure(), _prefabSelectionCircle, color);
+            PlaceSelection(tileClass.GetFigure(), _prefabSelectionCircle, color, id);
     }
 
-    [ServerRpc]
-    private void SelectSelectableServerRpc(Color diceColor, int maxVal, Color color)
+
+    [ServerRpc(RequireOwnership = false)]
+    private void SelectSelectableClientRpcToServerRpc(string diceId, int maxVal, Color color, string id)
     {
-        GameObject dice = _dice.Find(dice => dice.GetComponent<Renderer>().material.color == diceColor && dice.GetComponent<Dice>().GetMax() == maxVal);
-        PlaceSelection(dice, _prefabSelectionCircle, color);
+        SelectSelectableClientRpc(diceId, maxVal, color, id);
+    }
+    [ClientRpc]
+    private void SelectSelectableClientRpc(string diceId, int maxVal, Color color, string id)
+    {
+        GameObject dice = _dice.Find(dice => dice.GetComponent<Dice>().GetPlayerId() == diceId && dice.GetComponent<Dice>().GetMax() == maxVal);
+        if (dice == null)
+            return;
+        PlaceSelection(dice, _prefabSelectionCircle, color, id);
     }
 
-    private void PlaceSelection(GameObject selectable, GameObject selectionPrefab, Color color)
+    private void PlaceSelection(GameObject selectable, GameObject selectionPrefab, Color color, string id)
     {
-        GameObject selectionCircle = _selections.Find(circle => circle.GetComponent<Renderer>().material.color == color);
+        GameObject selectionCircle = _selections.Find(circle => circle.GetComponent<SelectionCircle>().GetPlayerId() == id);
         Vector3 selectionPos = selectable.transform.position;
         if (selectionCircle == null)
         {
@@ -319,6 +358,7 @@ public class PlacementController : NetworkBehaviour
                 _localGameboard.transform.lossyScale.x / _raster * 0.5f,
                 _localGameboard.transform.lossyScale.x / _raster * 0.25f,
                 _localGameboard.transform.lossyScale.z / _raster * 0.5f);
+            selectionCircle.GetComponent<SelectionCircle>().SetPlayerId(id);
             _selections.Add(selectionCircle.gameObject);
         }
 
@@ -335,6 +375,8 @@ public class PlacementController : NetworkBehaviour
     }
 
     //----------------
+
+
 
     private void PrepareMovement(GameObject currentSelected)
     {
@@ -353,11 +395,18 @@ public class PlacementController : NetworkBehaviour
         Debug.Log(xStart + "," + yStart);
         currentSelected.GetComponent<GameboardTile>().GetIndex(out int xEnd, out int yEnd);
         Debug.Log(xEnd + "," + yEnd);
-        ProcessMovementServerRpc(xStart, yStart, xEnd, yEnd);
+        ProcessMovementClientRpcToServerRpc(xStart, yStart, xEnd, yEnd);
     }
 
-    [ServerRpc]
-    private void ProcessMovementServerRpc(int xStart, int yStart, int xEnd, int yEnd)
+    // Sending the function to the Server
+    // To Broadcast the Movement of the Figure for all Clients
+    [ServerRpc(RequireOwnership = false)]
+    private void ProcessMovementClientRpcToServerRpc(int xStart, int yStart, int xEnd, int yEnd)
+    {
+        ProcessMovementClientRpc(xStart, yStart, xEnd, yEnd);
+    }
+    [ClientRpc]
+    private void ProcessMovementClientRpc(int xStart, int yStart, int xEnd, int yEnd)
     {
         if (_movement == Movement.PROCESSING)
             return;
@@ -524,8 +573,12 @@ public class PlacementController : NetworkBehaviour
         return lowestFCostTIle;
     }
 
+
+
     //-------------
 
+
+    //Dice Progression
     public void ProcessDice(GameObject diceButtonObject)
     {
         diceButtonObject.GetComponent<Button>().interactable = false;
@@ -533,27 +586,32 @@ public class PlacementController : NetworkBehaviour
         GameObject dice = diceButtonObject.GetComponent<ObjectHolder>().GetSpawnObject();
         int startIndex = Random.Range(0, 5);
         Quaternion startRot = Random.rotation;
-        ThrowDiceServerRpc(dice.GetComponent<Dice>().GetMax(), startIndex, startRot, playerColor);
+        ThrowDiceClientRpcToServerRpc(dice.GetComponent<Dice>().GetMax(), startIndex, startRot, playerColor, GetCurrentPlayerId());
         diceButtonObject.GetComponent<Button>().interactable = true;
     }
 
-    [ServerRpc]
-    public void ThrowDiceServerRpc(int maxValue, int startIndex, Quaternion startRot, Color color)
+    // Sending the function to the Server
+    // To Broadcast the dice throw for all Clients
+    [ServerRpc(RequireOwnership = false)]
+    private void ThrowDiceClientRpcToServerRpc(int maxValue, int startIndex, Quaternion startRot, Color color, string id)
+    {
+        ThrowDiceClientRpc(maxValue, startIndex, startRot, color, id);
+    }
+    [ClientRpc]
+    public void ThrowDiceClientRpc(int maxValue, int startIndex, Quaternion startRot, Color color, string id)
     {
         if (_localGameboard == null)
             return;
 
         GameObject dicePrefab = _prefabDice.Find(dicePrefab => dicePrefab.GetComponent<Dice>().GetMax() == maxValue);
         dicePrefab.GetComponent<Rigidbody>().useGravity = false;
-        Debug.Log("Prefab gotten");
 
         Vector3 startPos = _localGameboard.transform.Find(DICE_BOX_NAME).GetChild(startIndex).position;
         Vector3 direction = _localGameboard.transform.position - startPos;
         startPos += direction / _raster;
 
-        GameObject diceObject = _dice.Find((dice) => dice.GetComponent<Renderer>().material.color == color
+        GameObject diceObject = _dice.Find((dice) => dice.GetComponent<Dice>().GetPlayerId() == id
         && dice.GetComponent<Dice>().GetMax() == dicePrefab.GetComponent<Dice>().GetMax());
-        Debug.Log("Dice found");
         if (diceObject != null)
         {
             diceObject.transform.position = startPos;
@@ -565,6 +623,7 @@ public class PlacementController : NetworkBehaviour
             Vector3 lossyScale = _localGameboard.transform.lossyScale;
             Vector2 tileSizeVal = new Vector2(lossyScale.x / _raster, lossyScale.z / _raster);
             diceObject.transform.localScale = new Vector3(tileSizeVal.x / 2, tileSizeVal.x / 2, tileSizeVal.y / 2);
+            diceObject.GetComponent<Dice>().SetPlayerId(id);
             diceObject.GetComponent<Renderer>().material.color = color;
             _dice.Add(diceObject);
         }
@@ -576,6 +635,25 @@ public class PlacementController : NetworkBehaviour
     }
 
     //-------------
+
+    public void RemoveOwnSelection()
+    {
+        ClearSelectionClientRpcToServerRpc(GetCurrentPlayerId());
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void ClearSelectionClientRpcToServerRpc(string id)
+    {
+        ClearSelectionClientRpc(id);
+    }
+    [ClientRpc]
+    private void ClearSelectionClientRpc(string id)
+    {
+        GameObject selection = _selections.Find(selection => selection.GetComponent<SelectionCircle>().GetPlayerId() == id);
+        _selections.Remove(selection);
+        Destroy(selection);
+    }
+
 
     [ClientRpc]
     public void RemoveTerrainClientRpc(int x, int y, Color color)
@@ -604,33 +682,43 @@ public class PlacementController : NetworkBehaviour
     }
 
     [ClientRpc]
-    public void RemoveDiceClientRpc(int maxValue, Color color)
+    public void RemoveDiceClientRpc(int maxValue, string id)
     {
-        GameObject diceObject = _dice.Find(dice => dice.GetComponent<Renderer>().material.color == color
+        GameObject diceObject = _dice.Find(dice => dice.GetComponent<Dice>().GetPlayerId() == id
                                             && dice.GetComponent<Dice>().GetMax() == maxValue);
 
         _dice.Remove(diceObject);
         Destroy(diceObject);
     }
 
+
+
     public void ProcessDiceClear()
     {
-        Color playerColor = GetCurrentPlayerColor();
-
-        ClearDiceFromPlayerServerRpc(playerColor);
+        ClearDiceFromPlayerClientRpcToServerRpc(GetCurrentPlayerId());
     }
 
-    [ServerRpc]
-    private void ClearDiceFromPlayerServerRpc(Color color)
+    //Server communication
+    [ServerRpc(RequireOwnership = false)]
+    private void ClearDiceFromPlayerClientRpcToServerRpc(string id)
     {
-        List<GameObject> diceObjects = _dice.FindAll((dice) => dice.GetComponent<Renderer>().material.color == color);
-        _dice.RemoveAll((dice) => dice.GetComponent<Renderer>().material.color == color);
+        ClearDiceFromPlayerClientRpc(id);
+    }
+    [ClientRpc]
+    private void ClearDiceFromPlayerClientRpc(string id)
+    {
+        List<GameObject> diceObjects = _dice.FindAll((dice) => dice.GetComponent<Dice>().GetPlayerId() == id);
+        _dice.RemoveAll((dice) => dice.GetComponent<Dice>().GetPlayerId() == id);
 
         foreach (GameObject dice in diceObjects)
             Destroy(dice);
     }
 
+
+
     //-------------
+
+
 
     private Color GetCurrentPlayerColor()
     {
@@ -638,6 +726,11 @@ public class PlacementController : NetworkBehaviour
             return newColor;
 
         return Color.black;
+    }
+
+    private string GetCurrentPlayerId()
+    {
+        return LobbyManager.Instance.GetCurrentPlayer().Id;
     }
 
     private GameboardTile GetTile(int x, int y)
@@ -650,10 +743,10 @@ public class PlacementController : NetworkBehaviour
         if (_localGameboard == null)
             return;
 
-        float scaleVal = scale / 10;
-        Vector3 result = _localGameboard.transform.localScale + new Vector3(scaleVal, scaleVal, scaleVal);
+        float scaleVal = scale / 100;
+        Vector3 result = _localGameboard.transform.localScale * (1+scaleVal);
         Debug.Log(result);
-        if (result.magnitude <= new Vector3(0.01f, 0.01f, 0.01f).magnitude)
+        if (result.magnitude <= new Vector3(0.1f, 0.1f, 0.1f).magnitude)
             return;
 
         Debug.Log("New scale: " + result);

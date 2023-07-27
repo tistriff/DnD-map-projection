@@ -23,7 +23,28 @@ public class LobbyManager : MonoBehaviour
     public const string KEY_PLAYER_READY = "ReadyState";
     public const string PLAYER_WEAPON_STD = "1";
 
+    [SerializeField] private List<Texture2D> _mapTextures;
+
+
+    public event OnLobbyChangeDelegate OnLobbyChange;
+    public delegate void OnLobbyChangeDelegate();
     private Lobby _currentLobby = null;
+    public Lobby CurrentLobbyProperty
+    {
+        get
+        {
+            return _currentLobby;
+        }
+
+        set
+        {
+            if (_currentLobby == value) return;
+            _currentLobby = value;
+            if (OnLobbyChange != null)
+                OnLobbyChange();
+        }
+    }
+
     private float _heartbeatTimer = 0f;
     private float _heartbetTimerMax = 15;
     private float _lobbyPullTimer = 0f;
@@ -31,8 +52,6 @@ public class LobbyManager : MonoBehaviour
     private int _playerLimit = 10;
     private string _gameStartedCode = "";
     private bool _connected = false;
-
-    [SerializeField] private List<Texture2D> _mapTextures;
 
     public enum Role
     {
@@ -107,7 +126,7 @@ public class LobbyManager : MonoBehaviour
             if (_lobbyPullTimer < 0f)
             {
                 _lobbyPullTimer = _lobbyPullTimerMax;
-                _currentLobby = await LobbyService.Instance.GetLobbyAsync(lobby.Id);
+                CurrentLobbyProperty = await LobbyService.Instance.GetLobbyAsync(lobby.Id);
 
                 if (GetCurrentPlayer() == null) // IsPlayerInLobby() ?
                 {
@@ -174,7 +193,7 @@ public class LobbyManager : MonoBehaviour
                 }
             };
 
-            _currentLobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, createLobbyOptions);
+            CurrentLobbyProperty = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, createLobbyOptions);
 
             if (_currentLobby != null)
             {
@@ -206,7 +225,7 @@ public class LobbyManager : MonoBehaviour
             {
                 Player = CreatePlayer(playerName)
             };
-            _currentLobby = await Lobbies.Instance.JoinLobbyByCodeAsync(lobbyCode, joinLobbyByCodeOptions);
+            CurrentLobbyProperty = await Lobbies.Instance.JoinLobbyByCodeAsync(lobbyCode, joinLobbyByCodeOptions);
             if (_currentLobby != null)
             {
                 StartCoroutine(LobbyUpdateLoop());
@@ -237,7 +256,7 @@ public class LobbyManager : MonoBehaviour
             {
                 Player = CreatePlayer()
             };
-            _currentLobby = await LobbyService.Instance.QuickJoinLobbyAsync(quickJoinLobbyOptions);
+            CurrentLobbyProperty = await LobbyService.Instance.QuickJoinLobbyAsync(quickJoinLobbyOptions);
             if (_currentLobby != null)
             {
                 StartCoroutine(LobbyUpdateLoop());
@@ -285,7 +304,7 @@ public class LobbyManager : MonoBehaviour
     {
         try
         {
-            _currentLobby = await Lobbies.Instance.UpdateLobbyAsync(_currentLobby.Id, new UpdateLobbyOptions
+            CurrentLobbyProperty = await Lobbies.Instance.UpdateLobbyAsync(_currentLobby.Id, new UpdateLobbyOptions
             {
                 Data = new Dictionary<string, DataObject>
                 {
@@ -304,7 +323,7 @@ public class LobbyManager : MonoBehaviour
     {
         try
         {
-            _currentLobby = await Lobbies.Instance.UpdateLobbyAsync(_currentLobby.Id, new UpdateLobbyOptions
+            CurrentLobbyProperty = await Lobbies.Instance.UpdateLobbyAsync(_currentLobby.Id, new UpdateLobbyOptions
             {
                 Data = new Dictionary<string, DataObject>
                 {
@@ -398,7 +417,6 @@ public class LobbyManager : MonoBehaviour
 
     public List<Player> GetPlayerList()
     {
-        Debug.Log("CurrentLobby: " + _currentLobby);
         if (_currentLobby == null)
             return null;
 

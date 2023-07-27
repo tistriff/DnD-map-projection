@@ -5,8 +5,9 @@ using TMPro;
 using UnityEngine.UI;
 using System.Timers;
 using System.Collections;
+using Unity.Netcode;
 
-public class FileManager : MonoBehaviour
+public class FileManager : NetworkBehaviour
 {
     [SerializeField] Texture2D _tex;
     [SerializeField] GameObject _board;
@@ -59,11 +60,11 @@ public class FileManager : MonoBehaviour
         _dice.GetComponent<Rigidbody>().useGravity = false;
     }
 
-    //[ClientRpc]
-    public void PlaceTexture()
+    [ServerRpc(RequireOwnership = false)]
+    public void PlaceTextureServerRpc()
     {
         //AddToTile();
-        AddFigureToTile(_testTile);
+        AddFigureToTileClientRpc(0,1);
         //CreateTileView(_testTile);
 
     }
@@ -132,14 +133,13 @@ public class FileManager : MonoBehaviour
         tile.GetComponent<GameboardTile>().AddTerrainMarker(terrain);
     }
 
-    private void AddFigureToTile(GameObject tile)
+    [ClientRpc]
+    private void AddFigureToTileClientRpc(int x, int y)
     {
+        Debug.Log("Bauen!");
+        GameboardTile tileClass = _board.GetComponent<Gameboard>().GetTileArray()[x, y];
+        GameObject tile = tileClass.gameObject;
         Vector3 selectionPos = tile.transform.position;
-
-
-        Debug.Log("figure place beginnt");
-        GameboardTile tileClass = tile.GetComponent<GameboardTile>();
-        Debug.Log("tileClass gesetzt");
 
         _figurePrefab.GetComponent<FigureInfo>().SetName(_testString);
         if (tileClass.GetFigure() != null)

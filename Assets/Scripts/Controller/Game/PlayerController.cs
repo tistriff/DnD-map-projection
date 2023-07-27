@@ -20,7 +20,7 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private GameObject _removeMenu_Button;
     [SerializeField] private GameObject _removeMenu_Panel;
     [SerializeField] private GameObject _npcInputControl;
-
+    [SerializeField] private GameObject _terrainPlacementBox;
 
     [SerializeField] private PlacementController _placementController;
 
@@ -61,6 +61,7 @@ public class PlayerController : NetworkBehaviour
         _removeMenu_Button.SetActive(state);
         _removeMenu_Panel.SetActive(state);
         _npcInputControl.SetActive(state);
+        _terrainPlacementBox.SetActive(state);
     }
 
     void UpdatePlayerList(GameObject list)
@@ -83,10 +84,13 @@ public class PlayerController : NetworkBehaviour
 
             //GameObject objectInstance = element.gameObject;
             string name = player.Data[LobbyManager.KEY_PLAYER_NAME].Value;
+            string id = player.Id;
             element.GetComponent<Button>().onClick.AddListener(() =>
             {
                 GameObject model = element.GetComponent<ObjectHolder>().GetSpawnObject();
                 model.GetComponent<FigureInfo>().SetName(name);
+                model.GetComponent<FigureInfo>().SetIsPlayer(true);
+                model.GetComponent<FigureInfo>().SetPlayerId(id);
                 element.GetComponent<ObjectHolder>().SetSpawnObject(model);
                 _placementController.SetSpawnObject(element);
             });
@@ -107,8 +111,18 @@ public class PlayerController : NetworkBehaviour
             element.GetComponent<Image>().color = npc.GetColor();
             element.transform.Find("Playername").GetComponent<TMP_Text>().text = npc.GetName();
 
-            int id = npc.GetID();
+            string id = npc.GetID();
             element.transform.Find("X").GetComponent<Button>().onClick.AddListener(() => RemoveNPC(id));
+
+            string name = npc.GetName();
+            element.GetComponent<Button>().onClick.AddListener(() =>
+            {
+                GameObject model = element.GetComponent<ObjectHolder>().GetSpawnObject();
+                model.GetComponent<FigureInfo>().SetName(name);
+                model.GetComponent<FigureInfo>().SetPlayerId(id);
+                element.GetComponent<ObjectHolder>().SetSpawnObject(model);
+                _placementController.SetSpawnObject(element);
+            });
         }
     }
 
@@ -144,6 +158,7 @@ public class PlayerController : NetworkBehaviour
 
     private void LeaveGame()
     {
+        _placementController.RemoveOwnSelection();
         LobbyManager.Instance.LeaveLobby();
         ScenesManager.Instance.Exit();
     }
@@ -170,10 +185,13 @@ public class PlayerController : NetworkBehaviour
 
     public void SetNPCColor(int id, Color color)
     {
-        _currentNPCList.Find((npc) => npc.GetID() == id).SetColor(color);
+        NPC npc = _currentNPCList.Find((npc) => npc.GetID() == (id + ""));
+        if (npc == null)
+            return;
+        npc.SetColor(color);
     }
 
-    public void RemoveNPC(int id)
+    public void RemoveNPC(string id)
     {
         if (_currentNPCList.Count <= 0)
             return;

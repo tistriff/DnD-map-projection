@@ -6,6 +6,27 @@ public class FigureInfo : MonoBehaviour
 {
     private string _modelName;
     private bool _isMoving;
+    private bool _isPlayer = false;
+    private string _playerId;
+
+    public void SetPlayerId(string id)
+    {
+        _playerId = id;
+    }
+    public string GetPlayerId()
+    {
+        return _playerId;
+    }
+
+    public void SetIsPlayer(bool isPlayer)
+    {
+        _isPlayer = isPlayer;
+    }
+
+    public bool IsPlayer()
+    {
+        return _isPlayer;
+    }
 
     public void SetName(string name)
     {

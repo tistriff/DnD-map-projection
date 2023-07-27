@@ -15,9 +15,9 @@ public class NPC
         _weapon = weapon;
     }
 
-    public int GetID()
+    public string GetID()
     {
-        return _id;
+        return _id+"";
     }
 
     public string GetName()

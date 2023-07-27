@@ -73,7 +73,7 @@ public class DetailViewHandler : MonoBehaviour
                 controller.RemoveFigureClientRpc(x, y);
             } 
             else
-                controller.RemoveDiceClientRpc(artifact.GetComponent<Dice>().GetMax(), artifact.GetComponent<Renderer>().material.color);
+                controller.RemoveDiceClientRpc(artifact.GetComponent<Dice>().GetMax(), artifact.GetComponent<Dice>().GetPlayerId());
 
             Destroy(artifactInfoPanel);
         });

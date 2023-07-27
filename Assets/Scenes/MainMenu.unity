@@ -1427,10 +1427,10 @@ RectTransform:
   m_Father: {fileID: 1547790866}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 300}
-  m_SizeDelta: {x: 660, y: 135.98}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0, y: -177.45001}
+  m_SizeDelta: {x: 660, y: 239.78998}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &786174156
 MonoBehaviour:
@@ -1479,10 +1479,10 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 82
+  m_fontSize: 72
   m_fontSizeBase: 82
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
@@ -3122,6 +3122,11 @@ PrefabInstance:
       propertyPath: m_text
       value: Spiel beitreten
       objectReference: {fileID: 0}
+    - target: {fileID: 2775475086475720466, guid: 7bf08767188514d4d924ca9984b684a4,
+        type: 3}
+      propertyPath: m_fontSize
+      value: 26.15
+      objectReference: {fileID: 0}
     - target: {fileID: 4265414139056629264, guid: 7bf08767188514d4d924ca9984b684a4,
         type: 3}
       propertyPath: m_Name
@@ -3213,10 +3218,10 @@ RectTransform:
   m_Father: {fileID: 1278285379}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -0.000030518, y: -938.173}
-  m_SizeDelta: {x: 1000, y: 949.004}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -0.000061035156, y: 231.82703}
+  m_SizeDelta: {x: -80, y: -1390.996}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1587395925
 GameObject:
@@ -4121,7 +4126,7 @@ PrefabInstance:
     - target: {fileID: 478865811372870184, guid: 7bf08767188514d4d924ca9984b684a4,
         type: 3}
       propertyPath: m_SizeDelta.y
-      value: 60
+      value: 59
       objectReference: {fileID: 0}
     - target: {fileID: 478865811372870184, guid: 7bf08767188514d4d924ca9984b684a4,
         type: 3}
@@ -4166,7 +4171,7 @@ PrefabInstance:
     - target: {fileID: 478865811372870184, guid: 7bf08767188514d4d924ca9984b684a4,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 478865811372870184, guid: 7bf08767188514d4d924ca9984b684a4,
         type: 3}
@@ -4183,11 +4188,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2775475086475720466, guid: 7bf08767188514d4d924ca9984b684a4,
-        type: 3}
-      propertyPath: m_text
-      value: Spiel erstellen
-      objectReference: {fileID: 0}
     - target: {fileID: 4265414139056629264, guid: 7bf08767188514d4d924ca9984b684a4,
         type: 3}
       propertyPath: m_Name
@@ -4195,29 +4195,9 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8133140751697185283, guid: 7bf08767188514d4d924ca9984b684a4,
         type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 8133140751697185283, guid: 7bf08767188514d4d924ca9984b684a4,
-        type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 167069406}
-    - target: {fileID: 8133140751697185283, guid: 7bf08767188514d4d924ca9984b684a4,
-        type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: CreateGameSession
-      objectReference: {fileID: 0}
-    - target: {fileID: 8133140751697185283, guid: 7bf08767188514d4d924ca9984b684a4,
-        type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: MainMenuController, Assembly-CSharp
-      objectReference: {fileID: 0}
-    - target: {fileID: 8133140751697185283, guid: 7bf08767188514d4d924ca9984b684a4,
-        type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_StringArgument
-      value: Dungeonmaster
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

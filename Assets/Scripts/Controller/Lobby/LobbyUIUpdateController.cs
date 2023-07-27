@@ -40,17 +40,13 @@ public class LobbyUIUpdateController : MonoBehaviour
 
         _isDM = LobbyManager.Instance.IsDM();
         ActivateMenu();
+
+        LobbyManager.Instance.OnLobbyChange += UpdateLobbyDisplay;
     }
 
-    //public delegate void OnVariableChangeDelegate(int newVal);
-    //public event OnVariableChangeDelegate OnVariableChange;
-    // https://forum.unity.com/threads/variable-listener.468721/
-
-
-    private void Update()
+    private void OnDisable()
     {
-        //if(!_gameStarted)
-        UpdateLobbyDisplay();
+        LobbyManager.Instance.OnLobbyChange -= UpdateLobbyDisplay;
     }
 
     private void UpdateLobbyDisplay()

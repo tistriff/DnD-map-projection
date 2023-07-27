@@ -4,5 +4,14 @@ using UnityEngine;
 
 public class SelectionCircle : MonoBehaviour
 {
-    public Color color;
+    private string _playerId;
+
+    public void SetPlayerId(string id)
+    {
+        _playerId = id;
+    }
+    public string GetPlayerId()
+    {
+        return _playerId;
+    }
 }

@@ -409,7 +409,7 @@ GameObject:
   - component: {fileID: 3501736960736821665}
   - component: {fileID: 5747668301587272023}
   m_Layer: 5
-  m_Name: ArtifactInfoPanel
+  m_Name: ArtifactDetailView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
