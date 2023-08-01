@@ -9,7 +9,7 @@ public class SlideInOut : MonoBehaviour
 
     [SerializeField] private RectTransform _displayArea;
     [SerializeField] private RectTransform _buttonArea;
-    [SerializeField] private InputHandler _inputHandler;
+    [SerializeField] private SelectionHandler _inputHandler;
     [SerializeField] private float _desiredDuration = 3f;
     [SerializeField] private float _elapsedTime;
 

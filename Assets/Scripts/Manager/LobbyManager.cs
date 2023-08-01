@@ -23,7 +23,11 @@ public class LobbyManager : MonoBehaviour
     public const string KEY_PLAYER_READY = "ReadyState";
     public const string PLAYER_WEAPON_STD = "1";
 
-    [SerializeField] private List<Texture2D> _mapTextures;
+    [SerializeField] private AssetHolder _assetHolder;
+    private List<Texture2D> _mapTextures;
+    private List<Sprite> _iconTextures;
+    private List<GameObject> _charModels;
+    private GameObject _nPCModel;
 
 
     public event OnLobbyChangeDelegate OnLobbyChange;
@@ -77,6 +81,14 @@ public class LobbyManager : MonoBehaviour
         await UnityServices.InitializeAsync();
 
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
+
+        if(_assetHolder != null)
+        {
+            _mapTextures = _assetHolder.GetMaps();
+            _iconTextures = _assetHolder.GetIcons();
+            _charModels = _assetHolder.GetCharakterModels();
+            _nPCModel = _assetHolder.GetNPCModel();
+        }
     }
 
     // Lobby heartbeat loop & handling
@@ -449,6 +461,21 @@ public class LobbyManager : MonoBehaviour
     public Texture2D GetSelectedMap()
     {
         return _mapTextures[int.Parse(_currentLobby.Data[KEY_IMAGE].Value)];
+    }
+
+    public List<Sprite> GetIconList()
+    {
+        return _iconTextures;
+    }
+
+    public List<GameObject> GetCharakterModels()
+    {
+        return _charModels;
+    }
+
+    public GameObject GetNPCModel()
+    {
+        return _nPCModel;
     }
 
     public bool IsDM(string id = null)

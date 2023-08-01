@@ -20,7 +20,8 @@ public class LobbyUIUpdateController : MonoBehaviour
     [SerializeField] private GameObject _playerElementTemplate;
     [SerializeField] private GameObject _configMenu;
 
-    [SerializeField] private List<Sprite> _iconsList;
+    private List<Sprite> _iconList;
+
     [SerializeField] private GameObject _readyWarn;
     [SerializeField] private Button _leaveBtn;
     [SerializeField] private TMP_Text _playerLimit;
@@ -42,6 +43,7 @@ public class LobbyUIUpdateController : MonoBehaviour
         ActivateMenu();
 
         LobbyManager.Instance.OnLobbyChange += UpdateLobbyDisplay;
+        _iconList = LobbyManager.Instance.GetIconList();
     }
 
     private void OnDisable()
@@ -127,7 +129,7 @@ public class LobbyUIUpdateController : MonoBehaviour
         if (!LobbyManager.Instance.IsDM(player.Id))
         {
             playerConfig.transform.Find("Icon").GetComponent<Image>().sprite =
-                _iconsList[int.Parse(player.Data[LobbyManager.KEY_PLAYER_WEAPON].Value)];
+                _iconList[int.Parse(player.Data[LobbyManager.KEY_PLAYER_WEAPON].Value)];
         } else
         {
             Destroy(playerConfig.transform.Find("Icon").gameObject);
@@ -150,7 +152,7 @@ public class LobbyUIUpdateController : MonoBehaviour
         }
         else
         {
-            config.CreatePlayerConfig(_iconsList);
+            config.CreatePlayerConfig(_iconList);
         }
     }
 

@@ -14,7 +14,8 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private GameObject _uINpcList;
 
     [SerializeField] private GameObject _charakterPlatePrefab;
-    [SerializeField] private List<GameObject> _charakterModelPrefabs;
+    private List<GameObject> _charakterModelPrefabs;
+    private GameObject _npcModelPrefab;
 
     // Non-Host System References for Restriction
     [SerializeField] private GameObject _removeMenu_Button;
@@ -28,6 +29,9 @@ public class PlayerController : NetworkBehaviour
 
     private void Start()
     {
+        _charakterModelPrefabs = LobbyManager.Instance.GetCharakterModels();
+        _npcModelPrefab = LobbyManager.Instance.GetNPCModel();
+
         if (NetworkManager.Singleton == null)
         {
             // Can't listen to something that doesn't exist
@@ -104,9 +108,9 @@ public class PlayerController : NetworkBehaviour
         foreach (NPC npc in _currentNPCList)
         {
             GameObject element = Instantiate(_charakterPlatePrefab, list.transform);
-            GameObject charModel = _charakterModelPrefabs[_charakterModelPrefabs.Count - 1];
-            charModel.GetComponent<FigureInfo>().SetName(npc.GetName());
-            element.GetComponent<ObjectHolder>().SetSpawnObject(charModel);
+            GameObject npcModel = _npcModelPrefab;
+            npcModel.GetComponent<FigureInfo>().SetName(npc.GetName());
+            element.GetComponent<ObjectHolder>().SetSpawnObject(npcModel);
 
             element.GetComponent<Image>().color = npc.GetColor();
             element.transform.Find("Playername").GetComponent<TMP_Text>().text = npc.GetName();

@@ -35,7 +35,7 @@ public class PlacementController : NetworkBehaviour
     private const string SHADER_TEXTURE_NAME = "_MainTex";
     private const string DICE_BOX_NAME = "Walls";
 
-    [SerializeField] private InputHandler _inputHandler;
+    [SerializeField] private SelectionHandler _inputHandler;
     [SerializeField] private GameObject _prefabGameboard;
     [SerializeField] private GameObject _prefabTile;
     [SerializeField] private GameObject _prefabTerrain;
