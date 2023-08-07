@@ -40,10 +40,10 @@ public class LobbyUIUpdateController : MonoBehaviour
             lobbyTitle.text = "Lobby-Code: " + LobbyManager.Instance.GetCurrentLobbyKey();
 
         _isDM = LobbyManager.Instance.IsDM();
-        ActivateMenu();
 
         LobbyManager.Instance.OnLobbyChange += UpdateLobbyDisplay;
         _iconList = LobbyManager.Instance.GetIconList();
+        ActivateMenu(_isDM);
     }
 
     private void OnDisable()
@@ -53,24 +53,20 @@ public class LobbyUIUpdateController : MonoBehaviour
 
     private void UpdateLobbyDisplay()
     {
-        _lobbyUpdateTimer -= Time.deltaTime;
-        if (_lobbyUpdateTimer < 0f)
+        List<Player> players = LobbyManager.Instance.GetPlayerList();
+
+        if (players == null)
         {
-            _lobbyUpdateTimer = _lobbyUpdateTimerMax;
-            List<Player> players = LobbyManager.Instance.GetPlayerList();
-
-            if (players == null)
-            {
-                ScenesManager.Instance.Exit();
-                return;
-            }
-
-            if (!CompareList(players))
-                updatePlayerList(players);
-
-            if (!_leaveBtn.interactable)
-                _leaveBtn.interactable = true;
+            ScenesManager.Instance.Exit();
+            return;
         }
+
+        if (!CompareList(players))
+            updatePlayerList(players);
+
+        if (!_leaveBtn.interactable)
+            _leaveBtn.interactable = true;
+
     }
 
     private void UpdatePlayerLimit(List<Player> players)
@@ -142,10 +138,10 @@ public class LobbyUIUpdateController : MonoBehaviour
         _currentPlayerList.Add(player);
     }
 
-    public void ActivateMenu()
+    public void ActivateMenu(bool isDm)
     {
         ConfigBox config = _configMenu.GetComponent<ConfigBox>();
-        if (_isDM)
+        if (isDm)
         {
             config.CreateDMConfig();
             _readyWarn.SetActive(true);

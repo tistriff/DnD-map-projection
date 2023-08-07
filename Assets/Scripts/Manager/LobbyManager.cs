@@ -21,12 +21,13 @@ public class LobbyManager : MonoBehaviour
     public const string KEY_PLAYER_COLOR = "Color";
     public const string KEY_PLAYER_WEAPON = "Weapon";
     public const string KEY_PLAYER_READY = "ReadyState";
-    public const string PLAYER_WEAPON_STD = "1";
+    public const string PLAYER_WEAPON_STD = "0";
 
-    [SerializeField] private AssetHolder _assetHolder;
+    private AssetHolder _assetHolder = null;
     private List<Texture2D> _mapTextures;
-    private List<Sprite> _iconTextures;
+    private List<Sprite> _iconSprites;
     private List<GameObject> _charModels;
+    private List<GameObject> _diceModels;
     private GameObject _nPCModel;
 
 
@@ -82,11 +83,16 @@ public class LobbyManager : MonoBehaviour
 
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
-        if(_assetHolder != null)
+        GameObject assetObject = null;
+        if (_assetHolder == null)
+            assetObject = GameObject.FindGameObjectWithTag("AssetHolder");
+        if (assetObject != null)
         {
+            _assetHolder = assetObject.GetComponent<AssetHolder>();
             _mapTextures = _assetHolder.GetMaps();
-            _iconTextures = _assetHolder.GetIcons();
+            _iconSprites = _assetHolder.GetIcons();
             _charModels = _assetHolder.GetCharakterModels();
+            _diceModels = _assetHolder.GetDiceModels();
             _nPCModel = _assetHolder.GetNPCModel();
         }
     }
@@ -142,7 +148,6 @@ public class LobbyManager : MonoBehaviour
 
                 if (GetCurrentPlayer() == null) // IsPlayerInLobby() ?
                 {
-                    Debug.Log("No playerlist anymore");
                     LeaveLobby();
                     return;
                 }
@@ -165,9 +170,6 @@ public class LobbyManager : MonoBehaviour
                     && GetCurrentPlayer().Data[KEY_PLAYER_READY].Value == "True") // did the player already pressed ready?
                 {
                     // Join relay connection as Client
-                    Debug.Log("Connected: " + _connected);
-                    Debug.Log("Code: " + _gameStartedCode);
-                    Debug.Log("ReadyState: " + GetCurrentPlayer().Data[KEY_PLAYER_READY].Value);
                     Relay.Instance.JoinRelay(_gameStartedCode);
                     _connected = true;
                 }
@@ -223,8 +225,6 @@ public class LobbyManager : MonoBehaviour
             Debug.LogException(e, this);
             return false;
         }
-
-        ScenesManager.Instance.LoadLobby();
         return true;
     }
 
@@ -241,7 +241,6 @@ public class LobbyManager : MonoBehaviour
             if (_currentLobby != null)
             {
                 StartCoroutine(LobbyUpdateLoop());
-                ScenesManager.Instance.LoadLobby();
                 return true;
             }
             else
@@ -253,6 +252,7 @@ public class LobbyManager : MonoBehaviour
         }
         catch (LobbyServiceException e)
         {
+            Debug.LogError("Keine Lobby gefunden!");
             Debug.LogException(e, this);
             return false;
         }
@@ -272,7 +272,6 @@ public class LobbyManager : MonoBehaviour
             if (_currentLobby != null)
             {
                 StartCoroutine(LobbyUpdateLoop());
-                ScenesManager.Instance.LoadLobby();
             }
             else
             {
@@ -289,7 +288,7 @@ public class LobbyManager : MonoBehaviour
     }
 
     // Creates a usable Player Object
-    private Player CreatePlayer(string playerName = "", /*Role role = Role.Player,*/ Color? color = null)
+    private Player CreatePlayer(string playerName = "", Color? color = null)
     {
         string colorString = ColorUtility.ToHtmlStringRGB(color ?? Color.white);
 
@@ -465,12 +464,17 @@ public class LobbyManager : MonoBehaviour
 
     public List<Sprite> GetIconList()
     {
-        return _iconTextures;
+        return _iconSprites;
     }
 
     public List<GameObject> GetCharakterModels()
     {
         return _charModels;
+    }
+
+    public List<GameObject> GetDiceModels()
+    {
+        return _diceModels;
     }
 
     public GameObject GetNPCModel()

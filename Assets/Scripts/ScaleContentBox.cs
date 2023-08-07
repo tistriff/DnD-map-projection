@@ -47,16 +47,16 @@ public class ScaleContentBox : MonoBehaviour
 
     private void OnEnable()
     {
-        /*EnhancedTouch.TouchSimulation.Enable();
+        EnhancedTouch.TouchSimulation.Enable();
         EnhancedTouch.EnhancedTouchSupport.Enable();
-        EnhancedTouch.Touch.onFingerMove += FingerMove;*/
+        EnhancedTouch.Touch.onFingerMove += FingerMove;
     }
 
     private void OnDisable()
     {
-        /*EnhancedTouch.TouchSimulation.Disable();
+        EnhancedTouch.TouchSimulation.Disable();
         EnhancedTouch.EnhancedTouchSupport.Disable();
-        EnhancedTouch.Touch.onFingerMove -= FingerMove;*/
+        EnhancedTouch.Touch.onFingerMove -= FingerMove;
 
         new InputAction(binding: "<Mouse>/scroll").performed -= context => ScaleImage(context.ReadValue<Vector2>().y);
         MagReset();

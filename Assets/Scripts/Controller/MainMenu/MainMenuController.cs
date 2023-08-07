@@ -17,9 +17,12 @@ public class MainMenuController : MonoBehaviour
         _errorMsg.SetActive(false);
         bool success = await LobbyManager.Instance.CreateLobby();
 
-        if(success)
+        if(!success)
         {
             SetError(_errorMsg, "Verbindung fehlgeschlagen!");
+        } else
+        {
+            ScenesManager.Instance.LoadLobby();
         }
     }
 
@@ -28,9 +31,12 @@ public class MainMenuController : MonoBehaviour
         _errorMsg.SetActive(false);
         bool success = await LobbyManager.Instance.QuickJoinLobby();
 
-        if (success)
+        if (!success)
         {
             SetError(_errorMsg, "Verbindung fehlgeschlagen!");
+        } else
+        {
+            ScenesManager.Instance.LoadLobby();
         }
     }
 
@@ -39,9 +45,12 @@ public class MainMenuController : MonoBehaviour
         _errorMsg.SetActive(false);
         bool success = await LobbyManager.Instance.JoinLobbyByCode(lobbyId, playerName);
 
-        if (success)
+        if (!success)
         {
             SetError(_errorMsg, "Keine Lobby gefunden!");
+        } else
+        {
+            ScenesManager.Instance.LoadLobby();
         }
     }
 
@@ -54,7 +63,7 @@ public class MainMenuController : MonoBehaviour
         if (!string.IsNullOrEmpty(lobbyId))
         {
             JoinGameSession(playerName, lobbyId);
-            form.SetActive(false);
+            form.transform.parent.gameObject.SetActive(false);
         }
         else
         {

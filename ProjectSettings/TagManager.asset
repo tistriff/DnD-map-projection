@@ -17,6 +17,7 @@ TagManager:
   - SelectionCircle
   - Figure
   - Dice
+  - AssetHolder
   layers:
   - Default
   - TransparentFX

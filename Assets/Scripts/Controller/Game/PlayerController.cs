@@ -27,7 +27,7 @@ public class PlayerController : NetworkBehaviour
 
     private int _npcID;
 
-    private void Start()
+    private void Awake()
     {
         _charakterModelPrefabs = LobbyManager.Instance.GetCharakterModels();
         _npcModelPrefab = LobbyManager.Instance.GetNPCModel();
@@ -42,7 +42,10 @@ public class PlayerController : NetworkBehaviour
         NetworkManager.Singleton.StartHost();
         _currentPlayerList = new List<Player>();
         _currentNPCList = new List<NPC>();
+    }
 
+    private void Start()
+    {
         if (IsHost)
         {
             GetLatestPlayerList(0);
@@ -71,11 +74,16 @@ public class PlayerController : NetworkBehaviour
     void UpdatePlayerList(GameObject list)
     {
         ClearObjectList(list);
+        Debug.Log("Cleared!");
         foreach (Player player in _currentPlayerList)
         {
             if (player.Id == LobbyManager.Instance.GetCurrentLobby().HostId)
                 continue;
 
+            Debug.Log("List: " + list);
+            Debug.Log("prefab: " + _charakterPlatePrefab);
+            Debug.Log("PlayerList: " + _currentPlayerList);
+            Debug.Log("player: " + player);
             GameObject element = Instantiate(_charakterPlatePrefab, list.transform);
             GameObject charModel = _charakterModelPrefabs[int.Parse(player.Data[LobbyManager.KEY_PLAYER_WEAPON].Value)];
             element.GetComponent<ObjectHolder>().SetSpawnObject(charModel);
@@ -86,7 +94,6 @@ public class PlayerController : NetworkBehaviour
             element.transform.Find("Playername").GetComponent<TMP_Text>().text = player.Data[LobbyManager.KEY_PLAYER_NAME].Value;
             element.transform.Find("X").gameObject.SetActive(false);
 
-            //GameObject objectInstance = element.gameObject;
             string name = player.Data[LobbyManager.KEY_PLAYER_NAME].Value;
             string id = player.Id;
             element.GetComponent<Button>().onClick.AddListener(() =>
@@ -172,12 +179,16 @@ public class PlayerController : NetworkBehaviour
         if (NetworkManager.Singleton != null)
             return null;
 
+        LeaveGame();
+
         return LeaveGame;
     }
 
     public void AddNPC(TMP_Text textfield)
     {
         string name = textfield.text;
+        if (name == "")
+            name = "NPC " + (_npcID + 1);
         if (_currentNPCList.Find(npc => npc.GetName().Equals(name)) != null
             || _currentPlayerList.Find(player => player.Data[LobbyManager.KEY_PLAYER_NAME].Value.Equals(name)) != null)
             return;

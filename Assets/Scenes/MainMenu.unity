@@ -2692,6 +2692,74 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1228957217}
   m_CullTransparentMesh: 1
+--- !u!1 &1236436226
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1236436228}
+  - component: {fileID: 1236436227}
+  m_Layer: 0
+  m_Name: Assets
+  m_TagString: AssetHolder
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1236436227
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1236436226}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ce43aad40f18304cb74c7aa525d44e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _mapTextures:
+  - {fileID: 2800000, guid: 57dfad3d2437f0a409f56291af042de3, type: 3}
+  - {fileID: 2800000, guid: 4c871ee5f14ba1348998e1128ae8272e, type: 3}
+  - {fileID: 2800000, guid: 9a87208fcc11fe84ab58b516b77c5d40, type: 3}
+  - {fileID: 2800000, guid: 58a2947d8f7d41249aafb469d862d8e6, type: 3}
+  - {fileID: 2800000, guid: 9d3a8e85c6c255a4195b915c16e7aea1, type: 3}
+  _iconTextures:
+  - {fileID: 21300000, guid: 22a7f4c10ab8a8f4da8765f2b454b583, type: 3}
+  - {fileID: 21300000, guid: f59979aa369a33d47924619b6c80ac82, type: 3}
+  - {fileID: 21300000, guid: c7a8c11117c175742b7599c625c785b8, type: 3}
+  _charakterModels:
+  - {fileID: 2862547140333102871, guid: f28dd55eee67a854094cddeff8648694, type: 3}
+  - {fileID: 4990586948791493317, guid: 5c052612694638648b6ae63052c27ea4, type: 3}
+  - {fileID: 647735121108665409, guid: d66182e6f2a1fb24487222920997f491, type: 3}
+  _nPCModel: {fileID: 2862547140333102871, guid: f28dd55eee67a854094cddeff8648694,
+    type: 3}
+  _diceModels:
+  - {fileID: 5475239970341651374, guid: 2bd21017918d2064191866ec44bfda83, type: 3}
+  - {fileID: 3963370970846156565, guid: 0824502b4bd6d824699653844d060adf, type: 3}
+  - {fileID: 2902261815104768370, guid: 26eb5e5750435c246997ea32ea63914e, type: 3}
+  - {fileID: 3988508643586838238, guid: 7082cb66006b65b41bcea0a3d70f69eb, type: 3}
+  - {fileID: 6006158587912459721, guid: d678c5ef710a4814f9cdb273b7d8c52c, type: 3}
+  - {fileID: 393571977136081168, guid: c325d26066107f94b90b61c8b2bc50d9, type: 3}
+  - {fileID: 3330545068814723164, guid: 14afe01e25abb314a889f6cee8638a41, type: 3}
+--- !u!4 &1236436228
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1236436226}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 25.115364, y: 25.499922, z: 81.32213}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 9
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1242891118
 GameObject:
   m_ObjectHideFlags: 0
@@ -2951,14 +3019,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15d59efd105ee754c860ccd8e3460d7e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _mapTextures:
-  - {fileID: 2800000, guid: e7df757aba3e54a11a832b1b8cbe5aaa, type: 3}
-  - {fileID: 2800000, guid: 3b2a773e413d3e84f8c7c757734af584, type: 3}
-  - {fileID: 2800000, guid: 293ea6a99c4ba134cae49556942ee0ff, type: 3}
-  - {fileID: 2800000, guid: a36153625af524c1f9fb6e04b5ed3e1c, type: 3}
-  - {fileID: 2800000, guid: 81da6e5b6342f8f47a5a3a24221306c6, type: 3}
-  - {fileID: 2800000, guid: dffef66376be4fa480fb02b19edbe903, type: 3}
-  - {fileID: 28684132378477856, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
 --- !u!1 &1479604795
 GameObject:
   m_ObjectHideFlags: 0
@@ -3220,7 +3280,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.000061035156, y: 231.82703}
+  m_AnchoredPosition: {x: -0.00012207031, y: 231.82703}
   m_SizeDelta: {x: -80, y: -1390.996}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1587395925

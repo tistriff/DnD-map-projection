@@ -39,13 +39,13 @@ public class PlacementController : NetworkBehaviour
     [SerializeField] private GameObject _prefabGameboard;
     [SerializeField] private GameObject _prefabTile;
     [SerializeField] private GameObject _prefabTerrain;
-    [SerializeField] private List<GameObject> _prefabFigure;
-    [SerializeField] private List<GameObject> _prefabDice;
+    private List<GameObject> _prefabFigure;
+    private List<GameObject> _prefabDice;
     [SerializeField] private GameObject _prefabSelectionCircle;
 
     [SerializeField] private DetailViewHandler _detailViewHandler;
     [SerializeField] private GameObject _removeMenu;
-    [SerializeField] private GameObject _movementBtn;
+    [SerializeField] private Toggle _movementBtn;
 
     public const string TAG_PLANE = "ARPlane";
     public const string TAG_BOARD = "Gameboard";
@@ -69,6 +69,9 @@ public class PlacementController : NetworkBehaviour
         _dice = new List<GameObject>();
         _figures = new List<GameObject>();
         ResetPlacementInfo();
+
+        _prefabFigure = LobbyManager.Instance.GetCharakterModels();
+        _prefabDice = LobbyManager.Instance.GetDiceModels();
     }
 
     public void SelectGameboardPlacement(ARRaycastHit hit)
@@ -136,7 +139,6 @@ public class PlacementController : NetworkBehaviour
 
     private void SelectArtifactToPlace(GameObject root)
     {
-        Debug.Log(_objectColor);
         if (_objectColor == Color.black)
             _objectColor = GetCurrentPlayerColor();
 
@@ -181,6 +183,7 @@ public class PlacementController : NetworkBehaviour
                         break;
 
                 }
+                _lastSelected = root;
                 break;
 
             default:
@@ -215,11 +218,10 @@ public class PlacementController : NetworkBehaviour
             }
         }
 
-        _lastSelected = root;
-        if (_lastSelected.tag.Equals(TAG_FIGURE))
-            _movementBtn.GetComponent<Toggle>().interactable = true;
+        if (_movement != Movement.PROCESSING || _lastSelected != null && _lastSelected.tag.Equals(TAG_FIGURE))
+            ResetMovementBtn();
         else
-            _movementBtn.GetComponent<Toggle>().interactable = false;
+            DisableMovementBtn();
         ResetPlacementInfo();
     }
 
@@ -235,8 +237,9 @@ public class PlacementController : NetworkBehaviour
     [ClientRpc]
     private void PlaceTerrainClientRpc(int x, int y, Color color)
     {
-        Debug.Log(color);
         GameboardTile tileClass = GetTile(x, y);
+        if (tileClass == null)
+            return;
         GameObject tile = tileClass.gameObject;
         List<GameObject> terrainList = tileClass.GetTerrainList();
 
@@ -283,10 +286,10 @@ public class PlacementController : NetworkBehaviour
     {
 
         GameboardTile tileClass = GetTile(x, y);
-        GameObject tile = tileClass.gameObject;
-
-        if (tileClass.GetFigure() != null)
+        if (tileClass == null || tileClass.GetFigure() != null)
             return;
+
+        GameObject tile = tileClass.gameObject;
 
         GameObject figure = _figures.Find(figure => figure.GetComponent<FigureInfo>().IsPlayer() == isPlayer && figure.GetComponent<FigureInfo>().GetPlayerId().Equals(id));
         if (figure != null)
@@ -298,11 +301,12 @@ public class PlacementController : NetworkBehaviour
         {
             GameObject figurePrefab = _prefabFigure.Find(figure => figure.name.Equals(modelName));
             figure = Instantiate(figurePrefab, tile.transform);
-            figure.GetComponent<FigureInfo>().SetName(playerName);
-            figure.GetComponent<FigureInfo>().SetPlayerId(id);
-            figure.GetComponent<FigureInfo>().SetIsPlayer(isPlayer);
+            FigureInfo info = figure.GetComponent<FigureInfo>();
+            info.SetName(playerName);
+            info.SetPlayerId(id);
+            info.SetIsPlayer(isPlayer);
             figure.transform.localScale = new Vector3(0.8f, 40f, 0.8f);
-            figure.GetComponent<Renderer>().material.color = color;
+            info.SetColor(color);
             _figures.Add(figure);
         }
 
@@ -325,6 +329,9 @@ public class PlacementController : NetworkBehaviour
     private void SelectSelectableClientRpc(int rootCategory, Color color, int x, int y, string id)
     {
         GameboardTile tileClass = GetTile(x, y);
+        if (tileClass == null)
+            return;
+
         GameObject tile = tileClass.gameObject;
         if (rootCategory == 0)
             PlaceSelection(tile, _prefabSelectionCircle, color, id);
@@ -354,18 +361,20 @@ public class PlacementController : NetworkBehaviour
         if (selectionCircle == null)
         {
             selectionCircle = Instantiate(selectionPrefab, selectionPos, _localGameboard.transform.rotation);
-            selectionCircle.transform.localScale = new Vector3(
+            selectionCircle.GetComponent<SelectionCircle>().SetPlayerId(id);
+            selectionCircle.GetComponent<Renderer>().material.color = color;
+            _selections.Add(selectionCircle.gameObject);
+        }
+
+        selectionCircle.transform.localScale = new Vector3(
                 _localGameboard.transform.lossyScale.x / _raster * 0.5f,
                 _localGameboard.transform.lossyScale.x / _raster * 0.25f,
                 _localGameboard.transform.lossyScale.z / _raster * 0.5f);
-            selectionCircle.GetComponent<SelectionCircle>().SetPlayerId(id);
-            _selections.Add(selectionCircle.gameObject);
-        }
 
         float newYPos = selectionPos.y + selectable.transform.lossyScale.y / 2 + selectionCircle.transform.lossyScale.y / 2;
         selectionCircle.transform.position = new Vector3(selectionPos.x, newYPos, selectionPos.z);
 
-        selectionCircle.GetComponent<Renderer>().material.color = color;
+
     }
 
     private void ResetPlacementInfo()
@@ -380,21 +389,15 @@ public class PlacementController : NetworkBehaviour
 
     private void PrepareMovement(GameObject currentSelected)
     {
-        _movementBtn.GetComponent<Image>().color = Color.black;
         string currenttag = currentSelected.tag;
-        Debug.Log(currenttag);
         string lasttag = _lastSelected.tag;
-        Debug.Log(lasttag);
         if (!lasttag.Equals(TAG_FIGURE) || !currenttag.Equals(TAG_TILE) || currentSelected.GetComponent<GameboardTile>().GetFigure() != null)
         {
-            _movementBtn.GetComponent<Image>().color = Color.white;
             return;
         }
 
         _lastSelected.transform.parent.GetComponent<GameboardTile>().GetIndex(out int xStart, out int yStart);
-        Debug.Log(xStart + "," + yStart);
         currentSelected.GetComponent<GameboardTile>().GetIndex(out int xEnd, out int yEnd);
-        Debug.Log(xEnd + "," + yEnd);
         ProcessMovementClientRpcToServerRpc(xStart, yStart, xEnd, yEnd);
     }
 
@@ -408,14 +411,17 @@ public class PlacementController : NetworkBehaviour
     [ClientRpc]
     private void ProcessMovementClientRpc(int xStart, int yStart, int xEnd, int yEnd)
     {
-        if (_movement == Movement.PROCESSING)
-            return;
-        _movement = Movement.PROCESSING;
-
         GameboardTile startTileClass = GetTile(xStart, yStart);
+        if (startTileClass == null)
+            return;
         GameObject figure = startTileClass.GetFigure();
         GameboardTile endTileClass = GetTile(xEnd, yEnd);
         GameObject endTileObject = endTileClass.gameObject;
+
+        if (_movement == Movement.PROCESSING)
+            return;
+        _movement = Movement.PROCESSING;
+        DisableMovementBtn();
 
         figure.GetComponent<FigureInfo>().SetMoving(true);
         List<GameboardTile> path = CalculatePath(figure, endTileObject);
@@ -442,7 +448,7 @@ public class PlacementController : NetworkBehaviour
 
         figure.GetComponent<FigureInfo>().SetMoving(false);
         _movement = Movement.STOPPED;
-        _movementBtn.GetComponent<Image>().color = Color.black;
+        ResetMovementBtn();
     }
 
     private List<GameboardTile> CalculatePath(GameObject figure, GameObject endTileObject)
@@ -603,15 +609,12 @@ public class PlacementController : NetworkBehaviour
         if (_localGameboard == null)
             return;
 
-        GameObject dicePrefab = _prefabDice.Find(dicePrefab => dicePrefab.GetComponent<Dice>().GetMax() == maxValue);
-        dicePrefab.GetComponent<Rigidbody>().useGravity = false;
-
         Vector3 startPos = _localGameboard.transform.Find(DICE_BOX_NAME).GetChild(startIndex).position;
         Vector3 direction = _localGameboard.transform.position - startPos;
         startPos += direction / _raster;
 
         GameObject diceObject = _dice.Find((dice) => dice.GetComponent<Dice>().GetPlayerId() == id
-        && dice.GetComponent<Dice>().GetMax() == dicePrefab.GetComponent<Dice>().GetMax());
+        && dice.GetComponent<Dice>().GetMax() == maxValue);
         if (diceObject != null)
         {
             diceObject.transform.position = startPos;
@@ -619,18 +622,22 @@ public class PlacementController : NetworkBehaviour
         }
         else
         {
+            GameObject dicePrefab = _prefabDice.Find(dicePrefab => dicePrefab.GetComponent<Dice>().GetMax() == maxValue);
             diceObject = Instantiate(dicePrefab, startPos, startRot);
-            Vector3 lossyScale = _localGameboard.transform.lossyScale;
-            Vector2 tileSizeVal = new Vector2(lossyScale.x / _raster, lossyScale.z / _raster);
-            diceObject.transform.localScale = new Vector3(tileSizeVal.x / 2, tileSizeVal.x / 2, tileSizeVal.y / 2);
             diceObject.GetComponent<Dice>().SetPlayerId(id);
+            diceObject.GetComponent<Dice>().SetScalePercentage(dicePrefab.transform.localScale.x);
             diceObject.GetComponent<Renderer>().material.color = color;
             _dice.Add(diceObject);
         }
 
+        Vector3 lossyScale = _localGameboard.transform.lossyScale;
+        Vector2 tileSizeVal = new Vector2(lossyScale.x / _raster, lossyScale.z / _raster);
+        float scalePercentage = diceObject.GetComponent<Dice>().GetScalePercentage();
+        diceObject.transform.localScale = new Vector3(tileSizeVal.x / 2 * scalePercentage, tileSizeVal.x / 2 * scalePercentage, tileSizeVal.y / 2 * scalePercentage);
+
         Rigidbody body = diceObject.GetComponent<Rigidbody>();
         body.useGravity = true;
-        body.velocity = direction * 2;
+        body.velocity = direction * 1.5f;
         body.angularVelocity = direction * 0.5f;
     }
 
@@ -659,6 +666,8 @@ public class PlacementController : NetworkBehaviour
     public void RemoveTerrainClientRpc(int x, int y, Color color)
     {
         GameboardTile tileClass = GetTile(x, y);
+        if (tileClass == null)
+            return;
         GameObject terrain = tileClass.GetTerrainList().Find(terrainHolder => terrainHolder.transform.GetChild(0).GetComponent<Renderer>().material.color == color);
         tileClass.RemoveTerrainMarker(terrain);
     }
@@ -667,6 +676,8 @@ public class PlacementController : NetworkBehaviour
     public void ClearTerrainClientRpc(int x, int y)
     {
         GameboardTile tileClass = GetTile(x, y);
+        if (tileClass == null)
+            return;
         tileClass.ClearTerrainList();
     }
 
@@ -674,6 +685,8 @@ public class PlacementController : NetworkBehaviour
     public void RemoveFigureClientRpc(int x, int y)
     {
         GameboardTile tileClass = GetTile(x, y);
+        if (tileClass == null)
+            return;
         GameObject figure = tileClass.GetFigure();
 
         tileClass.SetFigure(null);
@@ -735,6 +748,8 @@ public class PlacementController : NetworkBehaviour
 
     private GameboardTile GetTile(int x, int y)
     {
+        if (_localGameboard == null)
+            return null;
         return _localGameboard.GetComponent<Gameboard>().GetTileArray()[x, y];
     }
 
@@ -744,12 +759,12 @@ public class PlacementController : NetworkBehaviour
             return;
 
         float scaleVal = scale / 100;
-        Vector3 result = _localGameboard.transform.localScale * (1+scaleVal);
-        Debug.Log(result);
+        scaleVal = Mathf.Clamp(scaleVal, -1f, 1f);
+        Vector3 result = _localGameboard.transform.localScale * Mathf.Abs(1 + scaleVal);
+
         if (result.magnitude <= new Vector3(0.1f, 0.1f, 0.1f).magnitude)
             return;
 
-        Debug.Log("New scale: " + result);
         _localGameboard.transform.localScale = result;
     }
 
@@ -758,21 +773,36 @@ public class PlacementController : NetworkBehaviour
         if (_movement == Movement.PROCESSING)
             return;
 
-        Toggle toggle = _movementBtn.GetComponent<Toggle>();
-        toggle.interactable = false;
+        _movementBtn.interactable = false;
 
-        if (toggle.isOn)
-        {
-            _movementBtn.GetComponent<Image>().color = Color.white;
-            _movement = Movement.STARTED;
-        }
+        if (_movementBtn.isOn)
+            ActiveMovementBtn();
         else
         {
-            _movementBtn.GetComponent<Image>().color = Color.black;
             _movement = Movement.STOPPED;
+            ResetMovementBtn();
         }
 
-        toggle.interactable = true;
+    }
+
+    private void ActiveMovementBtn()
+    {
+        _movement = Movement.STARTED;
+        _movementBtn.image.color = _movementBtn.colors.selectedColor;
+        _movementBtn.interactable = true;
+    }
+
+    private void DisableMovementBtn()
+    {
+        _movementBtn.interactable = false;
+        _movementBtn.image.color = _movementBtn.colors.disabledColor;
+    }
+
+    private void ResetMovementBtn()
+    {
+        _movementBtn.isOn = false;
+        _movementBtn.interactable = true;
+        _movementBtn.image.color = _movementBtn.colors.normalColor;
     }
 
     public void SetSpawnObject(GameObject gameObject)

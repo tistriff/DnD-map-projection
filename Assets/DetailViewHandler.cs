@@ -30,7 +30,6 @@ public class DetailViewHandler : MonoBehaviour
     {
         GameboardTile tileClass = tile.GetComponent<GameboardTile>();
         tileClass.GetIndex(out int xIndex, out int yIndex);
-        Debug.Log(xIndex + "," + yIndex);
 
         GameObject tileInfoPanel = Instantiate(_prefabTilePanel, transform);
         tileInfoPanel.transform.Find(NAME_HEADER).GetComponent<TMP_Text>().text = tile.tag;

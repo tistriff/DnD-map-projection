@@ -47,4 +47,12 @@ public class FigureInfo : MonoBehaviour
     {
         return _isMoving;
     }
+
+    public void SetColor(Color color)
+    {
+        foreach(Transform child in transform.GetChild(0))
+        {
+            child.GetComponent<Renderer>().material.color = color;
+        }
+    }
 }

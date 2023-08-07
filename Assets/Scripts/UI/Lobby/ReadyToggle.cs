@@ -8,12 +8,16 @@ public class ReadyToggle : MonoBehaviour
 {
     private bool _readyState;
 
+    private const string READY_TEXT = "Bereit";
+    private const string UNREADY_TEXT = "Nicht bereit";
+
     void Start()
     {
         ColorBlock colors = GetComponent<Button>().colors;
         colors.normalColor = Color.green;
         GetComponent<Button>().colors = colors;
         _readyState = false;
+        transform.GetComponentInChildren<TMP_Text>().text = READY_TEXT;
     }
 
     public void Toggle()
@@ -26,12 +30,12 @@ public class ReadyToggle : MonoBehaviour
         if (colors.normalColor == Color.green)
         {
             colors.normalColor = Color.red;
-            btnText = "Nicht bereit";
+            btnText = UNREADY_TEXT;
             _readyState = true;
         } else
         {
             colors.normalColor = Color.green;
-            btnText = "Bereit";
+            btnText = READY_TEXT;
             _readyState = false;
         }
         GetComponent<Button>().colors = colors;

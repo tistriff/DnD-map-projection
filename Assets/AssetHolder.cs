@@ -8,6 +8,7 @@ public class AssetHolder : MonoBehaviour
     [SerializeField] private List<Sprite> _iconTextures;
     [SerializeField] private List<GameObject> _charakterModels;
     [SerializeField] private GameObject _nPCModel;
+    [SerializeField] private List<GameObject> _diceModels;
 
     public List<Texture2D> GetMaps()
     {
@@ -22,6 +23,11 @@ public class AssetHolder : MonoBehaviour
     public List<GameObject> GetCharakterModels()
     {
         return _charakterModels;
+    }
+    
+    public List<GameObject> GetDiceModels()
+    {
+        return _diceModels;
     }
 
     public GameObject GetNPCModel()
