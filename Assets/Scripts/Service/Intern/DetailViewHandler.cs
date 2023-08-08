@@ -16,8 +16,11 @@ public class DetailViewHandler : MonoBehaviour
 
     public void CreateView(GameObject root, PlacementController controller, int objectCategory)
     {
-        if(transform.childCount > 0)
-            Destroy(transform.GetChild(0).gameObject);
+        if (transform.childCount > 0)
+        {
+            foreach (Transform child in transform)
+                Destroy(child);
+        }
 
         if (objectCategory == 0)
             CreateTileView(root, controller);
@@ -52,7 +55,7 @@ public class DetailViewHandler : MonoBehaviour
         tileInfoPanel.transform.Find(NAME_DESTROY).GetComponent<Button>().onClick.AddListener(() =>
         {
             controller.ClearTerrainClientRpc(xIndex, yIndex);
-            CreateTileView(tile, controller);
+            CreateView(tile, controller, 0);
         });
     }
 
@@ -70,7 +73,7 @@ public class DetailViewHandler : MonoBehaviour
             {
                 artifact.transform.parent.GetComponent<GameboardTile>().GetIndex(out int x, out int y);
                 controller.RemoveFigureClientRpc(x, y);
-            } 
+            }
             else
                 controller.RemoveDiceClientRpc(artifact.GetComponent<Dice>().GetMax(), artifact.GetComponent<Dice>().GetPlayerId());
 
