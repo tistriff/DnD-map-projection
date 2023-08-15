@@ -2,16 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SelectionCircle : MonoBehaviour
+// monobehaviour class for the gameobject of the selection circle
+// to inherit methods from the artifact class
+public class SelectionCircle : Artifact
 {
-    private string _playerId;
-
-    public void SetPlayerId(string id)
-    {
-        _playerId = id;
-    }
-    public string GetPlayerId()
-    {
-        return _playerId;
-    }
 }

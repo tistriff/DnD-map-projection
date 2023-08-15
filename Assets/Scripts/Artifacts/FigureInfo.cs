@@ -2,22 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FigureInfo : MonoBehaviour
+// Information class to hold additional information for the figure gameobject and inherits from the artifact class.
+// It is holding the name of the player it belongs to,
+// a state to determine if it is already moving
+// and a boolean to classify the object of the figure as player- oder npc-figure
+public class FigureInfo : Artifact
 {
-    private string _modelName;
+    private string _playerName;
     private bool _isMoving;
     private bool _isPlayer = false;
-    private string _playerId;
-
-    public void SetPlayerId(string id)
-    {
-        _playerId = id;
-    }
-    public string GetPlayerId()
-    {
-        return _playerId;
-    }
-
+    
     public void SetIsPlayer(bool isPlayer)
     {
         _isPlayer = isPlayer;
@@ -30,12 +24,12 @@ public class FigureInfo : MonoBehaviour
 
     public void SetName(string name)
     {
-        _modelName = name;
+        _playerName = name;
     }
 
     public string GetName()
     {
-        return _modelName;
+        return _playerName;
     }
 
     public void SetMoving(bool state)

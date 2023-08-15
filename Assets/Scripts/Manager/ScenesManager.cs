@@ -4,11 +4,10 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+// Manager class handle the scene loading
 public class ScenesManager : NetworkBehaviour
 {
     public static ScenesManager Instance;
-    //[SerializeField]
-    //private List<Scene> scenes;
 
     public enum Scene
     {
@@ -17,6 +16,7 @@ public class ScenesManager : NetworkBehaviour
         GameScene
     }
 
+    // Checks the current scene at the start of the game and changes it to the mainmenu scene 
     public void Awake()
     {
         Instance = this;
@@ -25,7 +25,8 @@ public class ScenesManager : NetworkBehaviour
             Exit();
 
     }
-
+    
+    // Sets the screen orientation according to the active scene
     private void Start()
     {
         string scene = SceneManager.GetActiveScene().name;
@@ -35,18 +36,21 @@ public class ScenesManager : NetworkBehaviour
             Screen.orientation = ScreenOrientation.LandscapeLeft;
     }
 
+    // exits to the mainmenu scene
     public void Exit()
     {
         Screen.orientation = ScreenOrientation.Portrait;
         SceneManager.LoadScene(Scene.MainMenu.ToString());
     }
 
+    // loads the lobby scene
     public void LoadLobby()
     {
         Screen.orientation = ScreenOrientation.Portrait;
         SceneManager.LoadScene(Scene.Lobby.ToString());
     }
 
+    // Loads the game scene through the NetworkManager
     public void LoadGame()
     {
         Screen.orientation = ScreenOrientation.LandscapeLeft;

@@ -9,12 +9,10 @@ using Unity.Services.Relay.Models;
 using Unity.VisualScripting;
 using UnityEngine;
 
+// Business class to handle the communication with the relayService
 public class Relay : MonoBehaviour
 {
     public static Relay Instance;
-
-    [SerializeField]
-    Logger logger;
 
     private void Awake()
     {
@@ -29,6 +27,10 @@ public class Relay : MonoBehaviour
         }
     }
 
+    // Creates a relay allocation with the relayService
+    // and starts a relay connection with the relay server data
+    // through the NetworkManager to start a host connection.
+    // Returns the code for other clients to join the connection
     public async Task<string> CreateRelay(int maxPlayers)
     {
         try
@@ -52,16 +54,16 @@ public class Relay : MonoBehaviour
         }
     }
 
+    // Tries to join a relay connection with the join code
+    // and sets the connection as communication tunnel for the NetworkManager
+    // to start a client connection
     public async void JoinRelay(string joinCode)
     {
         try
         {
             JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
-            Debug.Log("Allocation created");
             RelayServerData relayServerData = new RelayServerData(joinAllocation, "dtls");
-            Debug.Log("RelayServerData reached");
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
-            Debug.Log("ServerData setted");
             NetworkManager.Singleton.StartClient();
         }
         catch (RelayServiceException e)

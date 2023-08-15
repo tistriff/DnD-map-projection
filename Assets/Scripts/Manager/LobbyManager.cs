@@ -10,10 +10,12 @@ using System.Linq;
 using UnityEngine.UI;
 using System.Threading.Tasks;
 
+// Manager class to handle the communication with the lobbyService
 public class LobbyManager : MonoBehaviour
 {
     public static LobbyManager Instance;
 
+    // Dictionary keys
     public const string KEY_IMAGE = "Image";
     public const string KEY_RASTER = "Raster";
     public const string KEY_START_GAME = "RelayCode";
@@ -23,14 +25,17 @@ public class LobbyManager : MonoBehaviour
     public const string KEY_PLAYER_READY = "ReadyState";
     public const string PLAYER_WEAPON_STD = "0";
 
+    // object reference to gather set assets
     private AssetHolder _assetHolder = null;
+
+    // asset references for scene overlapping usage
     private List<Texture2D> _mapTextures;
     private List<Sprite> _iconSprites;
     private List<GameObject> _charModels;
     private List<GameObject> _diceModels;
     private GameObject _nPCModel;
 
-
+    // delegation to call a listener function every time the current lobby object property changes
     public event OnLobbyChangeDelegate OnLobbyChange;
     public delegate void OnLobbyChangeDelegate();
     private Lobby _currentLobby = null;
@@ -50,19 +55,16 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    // heartbeat and pull time values
     private float _heartbeatTimer = 0f;
     private float _heartbetTimerMax = 15;
     private float _lobbyPullTimer = 0f;
     private float _lobbyPullTimerMax = 1.1f;
+
+    // lobby and network information values
     private int _playerLimit = 10;
     private string _gameStartedCode = "";
     private bool _connected = false;
-
-    public enum Role
-    {
-        Dungeonmaster,
-        Player
-    }
 
     private void Awake()
     {
@@ -77,6 +79,8 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    // Calls the Authentification Service to create or hold the session authentification
+    // and gathers the assets from the _assetHolder the at the start of the mainmenu
     private async void Start()
     {
         await UnityServices.InitializeAsync();
@@ -107,6 +111,7 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    // Sends a ping to the lobbyService to signal that the lobby is still activ
     private async void HandleLobbyHeartbeat(Lobby lobby)
     {
         try
@@ -126,7 +131,7 @@ public class LobbyManager : MonoBehaviour
 
     }
 
-    // Update poll lopp & handling
+    // Update poll loop & handling
     IEnumerator LobbyUpdateLoop()
     {
         while (_currentLobby != null)
@@ -136,6 +141,7 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    // Requests and uses current lobby to check lobby states
     private async void HandleLobbyPulls(Lobby lobby)
     {
         try
@@ -143,33 +149,45 @@ public class LobbyManager : MonoBehaviour
             _lobbyPullTimer -= Time.deltaTime;
             if (_lobbyPullTimer < 0f)
             {
+
+                // Requests the current lobby
                 _lobbyPullTimer = _lobbyPullTimerMax;
                 CurrentLobbyProperty = await LobbyService.Instance.GetLobbyAsync(lobby.Id);
 
-                if (GetCurrentPlayer() == null) // IsPlayerInLobby() ?
+                // check if player is still in the lobby
+                if (GetCurrentPlayer() == null)
                 {
                     LeaveLobby();
                     return;
                 }
 
+                // Checks if there is already a relay connection to which the player is connected
                 if (_connected)
                     return;
 
-                // sets the code to join the relay connection for better usage
+
                 _gameStartedCode = _currentLobby.Data[KEY_START_GAME].Value;
 
+
+                // Initializes the relay connection,
+                // if the current player is the Host (DM), 
+                // the relay join code is empty
+                // and every one in the lobby is ready.
                 if (IsDM()
                    && _gameStartedCode.Equals("")
                    && CheckReady())
                 {
                     StartGame();
+                    _connected = true;
                 }
 
-                if (!_connected // is the player already connected? 
-                    && !_gameStartedCode.Equals("") // is the relay join code set?
-                    && GetCurrentPlayer().Data[KEY_PLAYER_READY].Value == "True") // did the player already pressed ready?
+
+                // Joins the realy connection,
+                // if the realy join code is not empty
+                // and the current player is ready
+                if (!_gameStartedCode.Equals("")
+                    && GetCurrentPlayer().Data[KEY_PLAYER_READY].Value == "True")
                 {
-                    // Join relay connection as Client
                     Relay.Instance.JoinRelay(_gameStartedCode);
                     _connected = true;
                 }
@@ -228,7 +246,7 @@ public class LobbyManager : MonoBehaviour
         return true;
     }
 
-    // Function to join a specific Lobby with the Lobbycode as a Client
+    // Creates a player object for the client and tries to join a lobby with the given lobbycode
     public async Task<bool> JoinLobbyByCode(string lobbyCode, string playerName)
     {
         try
@@ -258,36 +276,7 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // Function to quickjoin the first suitable public Lobby without a Lobbycode as a Client
-    public async Task<bool> QuickJoinLobby()
-    {
-
-        try
-        {
-            QuickJoinLobbyOptions quickJoinLobbyOptions = new QuickJoinLobbyOptions
-            {
-                Player = CreatePlayer()
-            };
-            CurrentLobbyProperty = await LobbyService.Instance.QuickJoinLobbyAsync(quickJoinLobbyOptions);
-            if (_currentLobby != null)
-            {
-                StartCoroutine(LobbyUpdateLoop());
-            }
-            else
-            {
-                Debug.LogError("Keine Lobby gefunden!");
-                return false;
-            }
-            return true;
-        }
-        catch (LobbyServiceException e)
-        {
-            Debug.LogException(e, this);
-            return false;
-        }
-    }
-
-    // Creates a usable Player Object
+    // Creates a usable Player Object for the lobbyService
     private Player CreatePlayer(string playerName = "", Color? color = null)
     {
         string colorString = ColorUtility.ToHtmlStringRGB(color ?? Color.white);
@@ -311,6 +300,7 @@ public class LobbyManager : MonoBehaviour
         return player;
     }
 
+    // Transmitts lobby configurations to update the current lobby data through the LobbyService
     public async void UpdateLobbyConfig(string index, string raster)
     {
         try
@@ -330,6 +320,7 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    // Transmitts the the relay code to update the current lobby data through the LobbyService
     public async void UpdateLobbyGameState(string relayCode)
     {
         try
@@ -348,6 +339,7 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    // Transmitts the player color to update the specified player data through the LobbyService
     public async void UpdatePlayerColor(Color newColor)
     {
         string colorString = ColorUtility.ToHtmlStringRGB(newColor);
@@ -367,6 +359,7 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    // Transmitts the player weapon to update the specified player data through the LobbyService
     public async void UpdatePlayerWeapon(string newWeapon)
     {
         try
@@ -385,6 +378,7 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    // Transmitts ready state of a player to update the specified player data through the LobbyService
     public async void UpdatePlayerReady(bool ready)
     {
         try
@@ -403,6 +397,7 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    // Checks if every player in the lobby is ready
     private bool CheckReady()
     {
         foreach (Player player in _currentLobby.Players)
@@ -413,10 +408,12 @@ public class LobbyManager : MonoBehaviour
         return true;
     }
 
+    // Initializes the realy connection and transmitts the join code
+    // as lobby configuration for every player in the lobby to use.
+    // Starts the game scene
     private async void StartGame()
     {
         string relayCode = await Relay.Instance.CreateRelay(_currentLobby.MaxPlayers);
-        _connected = true;
         UpdateLobbyGameState(relayCode);
         ScenesManager.Instance.LoadGame();
     }
@@ -441,7 +438,10 @@ public class LobbyManager : MonoBehaviour
 
     public Player GetCurrentPlayer()
     {
-        return _currentLobby.Players.Find((player) => player.Id == AuthenticationService.Instance.PlayerId);
+        if (_currentLobby == null)
+            return null;
+            
+        return _currentLobby.Players.Find((player) => player.Id.Equals(AuthenticationService.Instance.PlayerId));
     }
 
     public string GetCurrentLobbyKey()
@@ -498,6 +498,9 @@ public class LobbyManager : MonoBehaviour
         return _gameStartedCode;
     }
 
+    // Checks if the current player is the host (DM) of the lobby.
+    // if host: Closes the lobby
+    // if not: Current player is removed from the lobby
     public async void LeaveLobby()
     {
         try
@@ -519,6 +522,7 @@ public class LobbyManager : MonoBehaviour
         ResetLocalLobby();
     }
 
+    // Removes specified player from the current lobby
     public async void KickPlayer(Player player)
     {
         try
@@ -531,6 +535,7 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    // Closes the lobby, so all players are removed from the lobby
     private async void CloseLobby()
     {
         try

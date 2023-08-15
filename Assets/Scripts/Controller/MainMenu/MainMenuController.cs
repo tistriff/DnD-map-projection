@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 
+// Controller class to handle the mainmenu logic
 public class MainMenuController : MonoBehaviour
 {
     [SerializeField] private GameObject _joinErrorMsg;
@@ -12,6 +13,9 @@ public class MainMenuController : MonoBehaviour
         _errorMsg.gameObject.SetActive(false);
     }
 
+    // Is called at pressing the "Spiel erstellen"-Button
+    // Prepares the error message and
+    // calls the LobbyManager to create a new Lobby
     public async void CreateGameSession(string role)
     {
         _errorMsg.SetActive(false);
@@ -26,20 +30,8 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
-    public async void QuickJoinGameSession()
-    {
-        _errorMsg.SetActive(false);
-        bool success = await LobbyManager.Instance.QuickJoinLobby();
-
-        if (!success)
-        {
-            SetError(_errorMsg, "Verbindung fehlgeschlagen!");
-        } else
-        {
-            ScenesManager.Instance.LoadLobby();
-        }
-    }
-
+    // Prepares the error message and
+    // calls the LobbyManager to create a new Lobby
     public async void JoinGameSession(string playerName, string lobbyId)
     {
         _errorMsg.SetActive(false);
@@ -54,7 +46,10 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
-
+    // Is called at pressing the "Beitreten"-Button of the join formular
+    // Prepares the join error massage,
+    // recives and checks the input texts of the join formular fields
+    // and sends them to JoinGameSession
     public void SubmitJoin(GameObject form)
     {
         _joinErrorMsg.SetActive(false);
@@ -71,6 +66,7 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
+    // Places and activates the given error message
     public void SetError(GameObject errorMsg, string msg)
     {
         errorMsg.SetActive(true);

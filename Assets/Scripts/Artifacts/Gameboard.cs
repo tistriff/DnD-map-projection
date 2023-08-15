@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
+// Information class to hold additional information for the gameboard gameobject
+// and a more usable reference to its tile gameobjects
+// through an indexed array of GameboardTile objects.
 public class Gameboard : MonoBehaviour
 {
     private GameboardTile[,] _tiles;

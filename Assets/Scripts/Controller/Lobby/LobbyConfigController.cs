@@ -9,6 +9,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
+// lobby controller class to handle the lobby configuration functionality
 public class LobbyConfigController : MonoBehaviour
 {
     private Texture2D _tex;
@@ -24,83 +25,24 @@ public class LobbyConfigController : MonoBehaviour
     [SerializeField] private GameObject _imageSelectionMenu;
     [SerializeField] private GameObject _prefabImageSelection;
 
-
+    // Grid information
+    [SerializeField] private GameObject _gridLayerPrefab;
     [SerializeField] private TMP_Text _gridSizeText;
-    [SerializeField] private GameObject _gridLayer;
-    [SerializeField] private Button _plus;
-    [SerializeField] private Button _minus;
-    [SerializeField] private GameObject _readyWarn;
-    //private NetworkVariable<Image> bytes = new NetworkVariable<Image>();
+    [SerializeField] private Button _plusBtn;
+    [SerializeField] private Button _minusBtn;
 
+    // UI overlay for the Host to block the ready button
+    [SerializeField] private GameObject _readyWarn;
+
+    // Fills the map list at the start of the scene
     void Start()
     {
-        // Set filters (optional)
-        // It is sufficient to set the filters just once (instead of each time before showing the file browser dialog), 
-        // if all the dialogs will be using the same filters
-        FileBrowser.SetFilters(false, new FileBrowser.Filter("Images", ".jpg", ".png"));
-
-        // Set default filter that is selected when the dialog is shown (optional)
-        // Returns true if the default filter is set successfully
-        // In this case, set Images filter as the default filter
-        FileBrowser.SetDefaultFilter(".jpg");
-
-        // Set excluded file extensions (optional) (by default, .lnk and .tmp extensions are excluded)
-        // Note that when you use this function, .lnk and .tmp extensions will no longer be
-        // excluded unless you explicitly add them as parameters to the function
-        FileBrowser.SetExcludedExtensions(".lnk", ".tmp", ".zip", ".rar", ".exe");
-
-        // Add a new quick link to the browser (optional) (returns true if quick link is added successfully)
-        // It is sufficient to add a quick link just once
-        // Name: Users
-        // Path: C:\Users
-        // Icon: default (folder icon)
-        FileBrowser.AddQuickLink("Users", "C:\\Users", null);
-
         _maps = LobbyManager.Instance.GetMapList();
     }
 
-
-    public void OpenFileBrowser(TMP_Text text, Button btn)
-    {
-        _selectedImageText = text;
-        _rasterWindowButton = btn;
-        StartCoroutine(ShowLoadDialogCoroutine());
-    }
-
-    IEnumerator ShowLoadDialogCoroutine()
-    {
-        // Show a load file dialog and wait for a response from user
-        // Load file/folder: both, Allow multiple selection: true
-        // Initial path: default (Documents), Initial filename: empty
-        // Title: "Load File", Submit button text: "Load"
-        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.FilesAndFolders, false, null, null, "Lade Ordner und Dateien", "Wählen");
-
-        if (FileBrowser.Success && !string.IsNullOrEmpty(FileBrowser.Result[0]))
-        {
-            // Print paths of the selected files (FileBrowser.Result) (null, if FileBrowser.Success is false)
-            //Debug.Log(FileBrowser.Result[0]);
-            _selectedImageText.text = FileBrowserHelpers.GetFilename(FileBrowser.Result[0]);
-
-
-            byte[] bytes = FileBrowserHelpers.ReadBytesFromFile(FileBrowser.Result[0]);
-            _tex = new Texture2D(2, 2);
-            _tex.LoadImage(bytes);
-            _rasterImage.sprite = Sprite.Create(_tex, new Rect(0, 0, _tex.width, _tex.height), new Vector2(0.5f, 0.5f));
-            _rasterImage.SetNativeSize();
-
-            _rasterWindowButton.interactable = true;
-
-
-            // Or, copy the first file to persistentDataPath
-            //string destinationPath = Path.Combine(Application.persistentDataPath, FileBrowserHelpers.GetFilename(FileBrowser.Result[0]));
-            //FileBrowserHelpers.CopyFile(FileBrowser.Result[0], destinationPath);
-        }
-        else
-        {
-            ResetUI();
-        }
-    }
-
+    // Sets the reference of UI elements to set or change them later on.
+    // Creates the image list as gameobjects according to the map list.
+    // Every image is created as button with the option to select itself.
     public void OpenImageSelection(TMP_Text text, Button rasterBtn)
     {
         _selectedImageText = text;
@@ -127,6 +69,10 @@ public class LobbyConfigController : MonoBehaviour
         }
     }
 
+    // Saves the index of the map as a fast reference to save in the lobby.
+    // Prepares the image file for usage in the raster placement.
+    // Sets the UI text to display the selected Image name
+    // and enables the raster configuration button
     public void SelectImage(int index)
     {
         _selectedMapIndex = index;
@@ -139,38 +85,42 @@ public class LobbyConfigController : MonoBehaviour
         _rasterWindowButton.interactable = true;
     }
 
+    // Is called when pressing the raster button in the lobby config of the host.
     public void OpenRasterMenu()
     {
         _rasterMenu.SetActive(true);
         PlaceRaster();
     }
 
+    // Is called at pressing the "-"-Button. 
     public void ReduceRaster()
     {
         if (_gridSize < 1)
             return;
-        _plus.interactable = false;
-        _minus.interactable = false;
+        _plusBtn.interactable = false;
+        _minusBtn.interactable = false;
 
         _gridSize--;
         PlaceRaster();
 
-        _plus.interactable = true;
-        _minus.interactable = true;
+        _plusBtn.interactable = true;
+        _minusBtn.interactable = true;
     }
 
+    // Is called at pressing the "+"-Button. 
     public void IncreaseRaster()
     {
-        _plus.interactable = false;
-        _minus.interactable = false;
+        _plusBtn.interactable = false;
+        _minusBtn.interactable = false;
 
         _gridSize++;
         PlaceRaster();
 
-        _plus.interactable = true;
-        _minus.interactable = true;
+        _plusBtn.interactable = true;
+        _minusBtn.interactable = true;
     }
 
+    // Clears the old raster objects and creates a new raster according to _gridSize
     private void PlaceRaster()
     {
         Transform grid = _rasterImage.gameObject.transform.GetChild(0);
@@ -179,7 +129,7 @@ public class LobbyConfigController : MonoBehaviour
 
         for (int y = 0; y < _gridSize; y++)
         {
-            GameObject layer = Instantiate(_gridLayer, verticalLayer);
+            GameObject layer = Instantiate(_gridLayerPrefab, verticalLayer);
             Transform child = layer.transform.GetChild(0);
 
             for (int x = 1; x < _gridSize; x++)
@@ -191,6 +141,8 @@ public class LobbyConfigController : MonoBehaviour
         _gridSizeText.text = _gridSize.ToString();
     }
 
+    // Is called when pressing the save button in the lobby config of the host.
+    // Calls the LobbyManager to update the given lobby configurations for the selected image and the raster size
     public void UpdateLobbyConfig()
     {
         LobbyManager.Instance.UpdateLobbyConfig(_selectedMapIndex.ToString(), _gridSize.ToString());
@@ -206,12 +158,5 @@ public class LobbyConfigController : MonoBehaviour
                 Destroy(subchild.gameObject);
             Destroy(child.gameObject);
         }
-    }
-
-
-    private void ResetUI()
-    {
-        _selectedImageText.text = "";
-        _rasterWindowButton.interactable = false;
     }
 }

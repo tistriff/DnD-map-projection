@@ -9,30 +9,32 @@ using UnityEngine;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine.UI;
 
+// Lobby controller class to create or display
+// the non controlling UI objects of the lobby.
+// _currentPlayerList: holds every Player of the lobby in order to display the lobby player items
+// _iconList: asset list for every character icon
 public class LobbyUIUpdateController : MonoBehaviour
 {
-
-    private float _lobbyUpdateTimer;
-    private float _lobbyUpdateTimerMax = 0.6f;
     private List<Player> _currentPlayerList;
+    private List<Sprite> _iconList;
     private bool _isDM;
 
+    // prefabs to instantiate new UI elements and fill them
     [SerializeField] private GameObject _playerElementTemplate;
     [SerializeField] private GameObject _configMenu;
 
-    private List<Sprite> _iconList;
-
+    // UI element references which need dynamic adjustment
     [SerializeField] private GameObject _readyWarn;
-    [SerializeField] private Button _leaveBtn;
     [SerializeField] private TMP_Text _playerLimit;
-
-    //private LobbyConfigController _currentLobby;
 
     private void Awake()
     {
         _currentPlayerList = new List<Player>();
     }
 
+    // Sets the lobbycode and fills the icon list at the start of the scene.
+    // Creates a listening methode to update the lobby informations.
+    // Initialize the creation of the config menüs according to _isDM
     private void Start()
     {
         TMP_Text lobbyTitle = GameObject.FindGameObjectWithTag("LobbyID").GetComponent<TMP_Text>();
@@ -46,16 +48,19 @@ public class LobbyUIUpdateController : MonoBehaviour
         ActivateMenu(_isDM);
     }
 
+    // Removes the listener methode at the end of the scene
     private void OnDisable()
     {
         LobbyManager.Instance.OnLobbyChange -= UpdateLobbyDisplay;
     }
 
+    // Checks if the playerlist is filled and the player is still in the lobby.
+    // Initialize Creation of the player list if it is different from the old list
     private void UpdateLobbyDisplay()
     {
         List<Player> players = LobbyManager.Instance.GetPlayerList();
 
-        if (players == null)
+        if (players == null || LobbyManager.Instance.GetCurrentPlayer() == null)
         {
             ScenesManager.Instance.Exit();
             return;
@@ -63,17 +68,9 @@ public class LobbyUIUpdateController : MonoBehaviour
 
         if (!CompareList(players))
             updatePlayerList(players);
-
-        if (!_leaveBtn.interactable)
-            _leaveBtn.interactable = true;
-
     }
 
-    private void UpdatePlayerLimit(List<Player> players)
-    {
-        _playerLimit.text = "Spieleranzahl: " + players.Count + "/" + LobbyManager.Instance.GetPlayerLimit();
-    }
-
+    // Sets the new player limit and clears the childs of the parent element
     private void updatePlayerList(List<Player> players)
     {
         UpdatePlayerLimit(players);
@@ -91,6 +88,13 @@ public class LobbyUIUpdateController : MonoBehaviour
         }
     }
 
+    private void UpdatePlayerLimit(List<Player> players)
+    {
+        _playerLimit.text = "Spieleranzahl: " + players.Count + "/" + LobbyManager.Instance.GetPlayerLimit();
+    }
+
+    // Traverse the player list and creates player gameobjects
+    // according to the player prefab and the data in every player element
     private void CreatePlayerPlate(Player player, GameObject rootElement)
     {
         GameObject element = Instantiate(_playerElementTemplate, rootElement.transform);
@@ -106,6 +110,9 @@ public class LobbyUIUpdateController : MonoBehaviour
 
         namePlate.transform.Find("PlayerName").GetComponent<TMP_Text>().text =
             player.Data[LobbyManager.KEY_PLAYER_NAME].Value;
+
+
+        // enables or destroys the button to remove a player from the lobby
         Button xBtn = namePlate.transform.Find("X").GetComponent<Button>();
         if (_isDM && player.Id != LobbyManager.Instance.GetCurrentPlayer().Id)
         {
@@ -119,17 +126,20 @@ public class LobbyUIUpdateController : MonoBehaviour
             Destroy(xBtn.gameObject);
         }
 
-
         Transform playerConfig = element.transform.GetChild(1);
 
+
+        // Individualize the gameobject which represents the DM
         if (!LobbyManager.Instance.IsDM(player.Id))
         {
             playerConfig.transform.Find("Icon").GetComponent<Image>().sprite =
                 _iconList[int.Parse(player.Data[LobbyManager.KEY_PLAYER_WEAPON].Value)];
-        } else
+        }
+        else
         {
             Destroy(playerConfig.transform.Find("Icon").gameObject);
         }
+
 
         if (ColorUtility.TryParseHtmlString(
             player.Data[LobbyManager.KEY_PLAYER_COLOR].Value, out Color newColor))

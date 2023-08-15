@@ -32,7 +32,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8301893758752341012}
-  - {fileID: 5197573835335575508}
+  - {fileID: 6321269356815117820}
   - {fileID: 2352758341954688925}
   m_Father: {fileID: 4718127414487135111}
   m_RootOrder: -1
@@ -281,7 +281,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5130979399253479357}
-  - {fileID: 1672435408334245402}
+  - {fileID: 370739560993356761}
   - {fileID: 6312243929219160866}
   m_Father: {fileID: 3850927979033535064}
   m_RootOrder: -1
@@ -467,7 +467,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Charakter:'
+  m_text: Charakter
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -708,7 +708,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Farbe:'
+  m_text: Farbe
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1012,7 +1012,7 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b8baa574f4a325347ab2fd023ddbe80b, type: 3}
---- !u!224 &1672435408334245402 stripped
+--- !u!224 &370739560993356761 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1301697033026745792, guid: b8baa574f4a325347ab2fd023ddbe80b,
     type: 3}
@@ -1708,7 +1708,7 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5a4093eb037b64346b7485bbdfa1b528, type: 3}
---- !u!224 &5197573835335575508 stripped
+--- !u!224 &6321269356815117820 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2276803947392682543, guid: 5a4093eb037b64346b7485bbdfa1b528,
     type: 3}

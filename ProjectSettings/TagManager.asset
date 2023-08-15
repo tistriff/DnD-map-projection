@@ -18,6 +18,10 @@ TagManager:
   - Figure
   - Dice
   - AssetHolder
+  - "W\xFCrfel"
+  - Figur
+  - Selektion
+  - Feld
   layers:
   - Default
   - TransparentFX
